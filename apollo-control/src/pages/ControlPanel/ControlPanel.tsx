@@ -1,10 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
 import { ControlRow } from "../../components/ControlRow/ControlRow";
 import { MappingModal } from "../../components/MappingModal/MappingModal";
+import { InfoTooltip } from "../../components/common/InfoTooltip/InfoTooltip";
 import { FlatControl, useDeviceTree } from "../../hooks/useDeviceTree";
 import { useControlValues } from "../../hooks/useControlValues";
 import { useMappings } from "../../hooks/useMappings";
 import { Mapping } from "../../models/types";
+import { getSectionTooltip } from "../../utils/tooltipContent";
 import "./ControlPanel.css";
 
 /** Main control surface panel: shows all Apollo controls with live values and inline key mapping. */
@@ -93,9 +95,16 @@ function ControlSection({ group, values, mappingsByPath, onSetValue, onOpenModal
   const numerics = group.controls.filter(c => c.type !== "bool");
   const bools = group.controls.filter(c => c.type === "bool");
   const slug = group.name.toLowerCase().replace(/\s+/g, "-");
+  const sectionTooltip = getSectionTooltip(group.name);
   return (
     <div className={`ctrl-section ctrl-section--${slug}`}>
-      <div className="ctrl-section__name">{group.name}</div>
+      <div className="ctrl-section__name">
+        {sectionTooltip ? (
+          <InfoTooltip info={sectionTooltip}>{group.name}</InfoTooltip>
+        ) : (
+          group.name
+        )}
+      </div>
       {numerics.length > 0 && (
         <div className="ctrl-section__knobs">
           {numerics.map(ctrl => (

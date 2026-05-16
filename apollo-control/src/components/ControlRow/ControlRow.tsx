@@ -4,6 +4,8 @@ import { Mapping, asKeyCombo, asMidiTrigger } from "../../models/types";
 import { FlatControl } from "../../hooks/useDeviceTree";
 import { comboLabel } from "../../utils/keyTranslation";
 import { midiTriggerLabel } from "../../utils/midiTranslation";
+import { getControlTooltip, TooltipInfo } from "../../utils/tooltipContent";
+import { InfoTooltip } from "../common/InfoTooltip/InfoTooltip";
 import { CircularKnob } from "../common/CircularKnob/CircularKnob";
 import "./ControlRow.css";
 
@@ -24,10 +26,16 @@ export function ControlRow({ control, value, mappings, onSetValue, onOpenModal }
 }
 
 /** Header: label on the left, map icon (mapped = blue) on the right. */
-function ControlHeader({ label, mapped, summary, onMapClick }: { label: string; mapped: boolean; summary: string | null; onMapClick: () => void }) {
+function ControlHeader({ label, mapped, summary, tooltipInfo, onMapClick }: { label: string; mapped: boolean; summary: string | null; tooltipInfo?: TooltipInfo | null; onMapClick: () => void }) {
   return (
     <div className="ctrl-row__header">
-      <span className="ctrl-row__label">{label}</span>
+      {tooltipInfo ? (
+        <InfoTooltip info={tooltipInfo}>
+          <span className="ctrl-row__label">{label}</span>
+        </InfoTooltip>
+      ) : (
+        <span className="ctrl-row__label">{label}</span>
+      )}
       <button
         type="button"
         className={`ctrl-row__map-btn${mapped ? " ctrl-row__map-btn--mapped" : ""}`}
@@ -45,10 +53,11 @@ function ControlHeader({ label, mapped, summary, onMapClick }: { label: string; 
 function BoolRow({ control, value, mappings, onSetValue, onOpenModal }: ControlRowProps) {
   const isOn = value === true || value === 1;
   const summary = getMappingSummary(mappings);
+  const tooltipInfo = getControlTooltip(control.group, control.label);
 
   return (
     <div className="ctrl-row ctrl-row--bool">
-      <ControlHeader label={control.label} mapped={summary !== null} summary={summary} onMapClick={onOpenModal} />
+      <ControlHeader label={control.label} mapped={summary !== null} summary={summary} tooltipInfo={tooltipInfo} onMapClick={onOpenModal} />
       <button
         className={`ctrl-row__toggle${isOn ? " ctrl-row__toggle--on" : ""}`}
         onClick={() => onSetValue(control.path, !isOn)}
@@ -72,12 +81,13 @@ function NumericRow({ control, value, mappings, onSetValue, onOpenModal }: Contr
   const num = typeof value === "number" ? value : 0;
   const [localVal, setLocalVal] = useState(num);
   const summary = getMappingSummary(mappings);
+  const tooltipInfo = getControlTooltip(control.group, control.label);
 
   useEffect(() => { setLocalVal(num); }, [num]);
 
   return (
     <div className="ctrl-row ctrl-row--numeric">
-      <ControlHeader label={control.label} mapped={summary !== null} summary={summary} onMapClick={onOpenModal} />
+      <ControlHeader label={control.label} mapped={summary !== null} summary={summary} tooltipInfo={tooltipInfo} onMapClick={onOpenModal} />
       <CircularKnob
         min={min}
         max={max}
