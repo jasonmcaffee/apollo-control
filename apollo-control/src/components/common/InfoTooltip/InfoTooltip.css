@@ -1,6 +1,8 @@
 .info-tooltip-anchor {
   cursor: help;
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 .info-tooltip {

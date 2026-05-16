@@ -15,7 +15,9 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex, RwLock};
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
-use tauri::{Manager, State};
+use tauri::{AppHandle, Manager, State};
+use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_autostart::ManagerExt;
 
 struct AppState {
     config: Arc<RwLock<Config>>,
@@ -136,6 +138,20 @@ fn cancel_midi_capture(state: State<AppState>) -> Result<(), String> {
     Ok(())
 }
 
+/** Return whether the app is registered to start automatically on login. */
+#[tauri::command]
+fn get_autostart(app: AppHandle) -> bool {
+    app.autolaunch().is_enabled().unwrap_or(false)
+}
+
+/** Enable or disable starting the mapper listener on system login. */
+#[tauri::command]
+fn set_autostart(enabled: bool, app: AppHandle) -> Result<(), String> {
+    let al = app.autolaunch();
+    if enabled { al.enable() } else { al.disable() }
+        .map_err(|e| e.to_string())
+}
+
 /**
  * Return the Apollo Solo device tree as a nested JSON structure.
  * Indices are based on the live-verified Solo control surface.
@@ -212,6 +228,9 @@ fn get_device_tree() -> Value {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // When launched at boot via autostart, --hidden suppresses the main window.
+    let start_hidden = std::env::args().any(|a| a == "--hidden");
+
     let config = Arc::new(RwLock::new(Config::load()));
     let capturing = Arc::new(AtomicBool::new(false));
     let captured_tx: Arc<Mutex<Option<std::sync::mpsc::Sender<KeyCombo>>>> =
@@ -227,12 +246,17 @@ pub fn run() {
     let midi_handle = spawn_midi_manager(config.clone());
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--hidden"])))
         .manage(AppState { config, capturing, captured_tx, hotkey_handle, midi_handle })
-        .setup(|app| {
-            // Give the MIDI manager an AppHandle so it can emit events to the UI.
+        .setup(move |app| {
             let state: State<AppState> = app.state();
             attach_app_handle(&state.midi_handle, app.handle().clone());
             setup_tray(app)?;
+            if start_hidden {
+                if let Some(win) = app.get_webview_window("main") {
+                    let _ = win.hide();
+                }
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -246,6 +270,8 @@ pub fn run() {
             list_midi_devices,
             start_midi_capture,
             cancel_midi_capture,
+            get_autostart,
+            set_autostart,
             get_device_tree,
         ])
         .run(tauri::generate_context!())

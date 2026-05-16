@@ -1,0 +1,103 @@
+.settings-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-modal__loading {
+  color: var(--ink-400);
+  font: 400 13px/1.5 var(--font-sans);
+  padding: 8px 0;
+}
+
+/* ── Section ─────────────────────────────────── */
+.settings-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-modal__section-label {
+  font: 500 10px/1.4 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-400);
+  margin-bottom: 8px;
+}
+
+/* ── Row ─────────────────────────────────────── */
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--surface-sunken);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+  padding-bottom: 4px;
+}
+
+.settings-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-row__title {
+  font: 500 13px/1.4 var(--font-sans);
+  color: var(--ink-700);
+  margin-bottom: 4px;
+}
+
+.settings-row__desc {
+  font: 400 11px/1.6 var(--font-sans);
+  color: var(--ink-400);
+}
+
+/* ── Toggle ──────────────────────────────────── */
+.settings-row__toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.settings-row__toggle-track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--surface-sunken);
+  box-shadow: var(--e-pressed-sm);
+  transition: background 0.18s ease;
+}
+
+.settings-row__toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--grad-knob);
+  box-shadow:
+    -1px -1px 2px rgba(255, 255, 255, 0.8),
+    1px 1px 3px rgba(120, 130, 150, 0.55),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.7);
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-row__toggle--on .settings-row__toggle-track {
+  background: linear-gradient(90deg, var(--accent-mint), #59d6b3);
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.18),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.25);
+}
+
+.settings-row__toggle--on .settings-row__toggle-thumb {
+  transform: translateX(18px);
+}

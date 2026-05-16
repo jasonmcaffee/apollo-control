@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
+import { BsGear } from "react-icons/bs";
 import { ControlRow } from "../../components/ControlRow/ControlRow";
 import { MappingModal } from "../../components/MappingModal/MappingModal";
+import { SettingsModal } from "../../components/SettingsModal/SettingsModal";
 import { InfoTooltip } from "../../components/common/InfoTooltip/InfoTooltip";
+import { IconButton } from "../../components/common/IconButton/IconButton";
 import { FlatControl, useDeviceTree } from "../../hooks/useDeviceTree";
 import { useControlValues } from "../../hooks/useControlValues";
 import { useMappings } from "../../hooks/useMappings";
@@ -15,7 +18,9 @@ export function ControlPanel() {
   const { values, loading: valLoading, sdkAvailable, setValue } = useControlValues(controls);
   const { mappings, upsert: saveMappingFn, remove: deleteMapping } = useMappings();
   const [modalControl, setModalControl] = useState<FlatControl | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   const handleCloseModal = useCallback(() => setModalControl(null), []);
+  const handleCloseSettings = useCallback(() => setShowSettings(false), []);
 
   const rows = useMemo(() => groupControlsByRow(controls), [controls]);
 
@@ -46,6 +51,7 @@ export function ControlPanel() {
             {sdkAvailable ? "Live" : "Offline"}
           </span>
         </div>
+        <IconButton Icon={BsGear} onClick={() => setShowSettings(true)} ariaLabel="Settings" title="Settings" size={16} />
       </header>
 
       <div className="control-panel__grid">
@@ -74,6 +80,7 @@ export function ControlPanel() {
           onClose={handleCloseModal}
         />
       )}
+      {showSettings && <SettingsModal onClose={handleCloseSettings} />}
     </div>
   );
 }

@@ -62,6 +62,16 @@ export async function cancelMidiCapture(): Promise<void> {
   return invoke<void>("cancel_midi_capture");
 }
 
+/** Get whether the app is registered to start on login. */
+export async function getAutostart(): Promise<boolean> {
+  return invoke<boolean>("get_autostart");
+}
+
+/** Enable or disable starting the mapper listener on system login. */
+export async function setAutostart(enabled: boolean): Promise<void> {
+  return invoke<void>("set_autostart", { enabled });
+}
+
 /** Build a new mapping object with a generated id. */
 export function createNewMapping(trigger: Trigger | KeyCombo, action: Action, name: string): Mapping {
   const t: Trigger = "source" in trigger ? trigger : keyTrigger(trigger);
@@ -253,6 +263,8 @@ async function browserMock<T>(cmd: string, args?: Record<string, unknown>): Prom
     case "list_midi_devices": return ["KeyLab mkII 49", "Launch Control XL"] as T;
     case "start_midi_capture": return { device: "KeyLab mkII 49", channel: 1, kind: "cc", data1: 7, data2: 64, raw_value: 64 } as T;
     case "cancel_midi_capture": return undefined as T;
+    case "get_autostart": return false as T;
+    case "set_autostart": return undefined as T;
     default:
       console.warn(`[browser-mock] unhandled invoke: ${cmd}`);
       return undefined as T;
