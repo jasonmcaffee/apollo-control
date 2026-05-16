@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
@@ -10,6 +10,74 @@ pub struct KeyCombo {
     pub key: String,
 }
 
+/**
+ * Source of a mapping trigger: a keyboard combo or a MIDI message.
+ *
+ * Serialized form (note the `source` tag rather than `kind`, since MidiTrigger
+ * already has a `kind` field for the MIDI message type):
+ *   `{ "source": "Key",  "modifiers": [...], "key": "..." }`
+ *   `{ "source": "Midi", "device": "...", "channel": 0, "kind": "cc", "data1": 80, "mode": "continuous" }`
+ */
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(tag = "source")]
+pub enum Trigger {
+    Key(KeyCombo),
+    Midi(MidiTrigger),
+}
+
+/** Custom deserializer that supports the legacy `{modifiers, key}` shape for keyboard triggers. */
+impl<'de> Deserialize<'de> for Trigger {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let v = Value::deserialize(d)?;
+        if let Some(source) = v.get("source").and_then(|k| k.as_str()) {
+            match source {
+                "Key" => {
+                    let combo: KeyCombo = serde_json::from_value(v).map_err(serde::de::Error::custom)?;
+                    Ok(Trigger::Key(combo))
+                }
+                "Midi" => {
+                    let m: MidiTrigger = serde_json::from_value(v).map_err(serde::de::Error::custom)?;
+                    Ok(Trigger::Midi(m))
+                }
+                other => Err(serde::de::Error::custom(format!("unknown trigger source: {}", other))),
+            }
+        } else {
+            // Legacy format: `{ modifiers, key }` without `source` field.
+            let combo: KeyCombo = serde_json::from_value(v).map_err(serde::de::Error::custom)?;
+            Ok(Trigger::Key(combo))
+        }
+    }
+}
+
+/** MIDI message-shape trigger. `device: None` means "any source device". */
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct MidiTrigger {
+    pub device: Option<String>,
+    pub channel: Option<u8>,
+    pub kind: MidiKind,
+    /** Note number for note_on/off, controller number for cc, ignored for pitch_bend. */
+    pub data1: u8,
+    pub mode: MidiMode,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum MidiKind {
+    NoteOn,
+    NoteOff,
+    Cc,
+    PitchBend,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum MidiMode {
+    /** Single-shot trigger (note-on or fixed CC): fires `Toggle` / `Hold` / press-on-down style actions. */
+    Discrete,
+    /** Continuous-value trigger (fader / CC sweep / pitch bend): maps 0..1 normalized value to the control range. */
+    Continuous,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Action {
@@ -17,7 +85,7 @@ pub enum Action {
     Step { path: String, delta: f64, min: f64, max: f64 },
     Set { path: String, value: Value },
     Hold { path: String, press_value: Value, release_value: Value },
-    /** Bidirectional scroll-wheel action: direction (±1.0) applied at runtime from wheel delta. */
+    /** Bidirectional scroll-wheel / knob action: direction (±1.0) applied at runtime from wheel delta. */
     Knob { path: String, step: f64, min: f64, max: f64 },
 }
 
@@ -26,13 +94,32 @@ pub struct Mapping {
     pub id: String,
     pub name: String,
     pub enabled: bool,
-    pub trigger: KeyCombo,
+    pub trigger: Trigger,
     pub action: Action,
 }
 
 impl Mapping {
-    pub fn new(name: String, trigger: KeyCombo, action: Action) -> Self {
+    #[allow(dead_code)]
+    pub fn new(name: String, trigger: Trigger, action: Action) -> Self {
         Mapping { id: Uuid::new_v4().to_string(), name, enabled: true, trigger, action }
+    }
+
+    /** Returns the keyboard combo if this mapping is keyboard-triggered, else None. */
+    #[allow(dead_code)]
+    pub fn key_trigger(&self) -> Option<&KeyCombo> {
+        match &self.trigger {
+            Trigger::Key(c) => Some(c),
+            _ => None,
+        }
+    }
+
+    /** Returns the MIDI trigger if this mapping is MIDI-triggered, else None. */
+    #[allow(dead_code)]
+    pub fn midi_trigger(&self) -> Option<&MidiTrigger> {
+        match &self.trigger {
+            Trigger::Midi(m) => Some(m),
+            _ => None,
+        }
     }
 }
 
@@ -87,4 +174,91 @@ fn config_path() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("."))
         .join(".apollo-control")
         .join("mappings.json")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn legacy_trigger_deserializes_as_key() {
+        let raw = json!({ "modifiers": ["Shift"], "key": "KeyS" });
+        let t: Trigger = serde_json::from_value(raw).unwrap();
+        assert_eq!(
+            t,
+            Trigger::Key(KeyCombo { modifiers: vec!["Shift".into()], key: "KeyS".into() })
+        );
+    }
+
+    #[test]
+    fn legacy_config_loads_and_migrates() {
+        let legacy = json!({
+            "mappings": [{
+                "id": "abc",
+                "name": "legacy",
+                "enabled": true,
+                "trigger": { "modifiers": ["Shift"], "key": "KeyS" },
+                "action": { "type": "Toggle", "path": "/foo" }
+            }]
+        });
+        let cfg: Config = serde_json::from_value(legacy).unwrap();
+        assert_eq!(cfg.mappings.len(), 1);
+        let key = cfg.mappings[0].key_trigger().unwrap();
+        assert_eq!(key.key, "KeyS");
+        assert_eq!(key.modifiers, vec!["Shift".to_string()]);
+        // Round-trip: persist + reload preserves data with new shape.
+        let json_out = serde_json::to_string(&cfg).unwrap();
+        assert!(json_out.contains("\"source\":\"Key\""));
+        let cfg2: Config = serde_json::from_str(&json_out).unwrap();
+        assert_eq!(cfg2.mappings[0].key_trigger().unwrap().key, "KeyS");
+    }
+
+    #[test]
+    fn new_key_trigger_serde_round_trip() {
+        let t = Trigger::Key(KeyCombo { modifiers: vec!["Ctrl".into()], key: "F1".into() });
+        let s = serde_json::to_string(&t).unwrap();
+        assert!(s.contains("\"source\":\"Key\""));
+        let back: Trigger = serde_json::from_str(&s).unwrap();
+        assert_eq!(t, back);
+    }
+
+    #[test]
+    fn midi_trigger_serde_round_trip() {
+        let t = Trigger::Midi(MidiTrigger {
+            device: Some("MiniLab 3".into()),
+            channel: Some(0),
+            kind: MidiKind::Cc,
+            data1: 80,
+            mode: MidiMode::Continuous,
+        });
+        let s = serde_json::to_string(&t).unwrap();
+        assert!(s.contains("\"source\":\"Midi\""));
+        assert!(s.contains("\"kind\":\"cc\""));
+        let back: Trigger = serde_json::from_str(&s).unwrap();
+        assert_eq!(t, back);
+    }
+
+    #[test]
+    fn midi_trigger_all_devices_is_none() {
+        let raw = json!({
+            "source": "Midi",
+            "device": null,
+            "channel": null,
+            "kind": "note_on",
+            "data1": 64,
+            "mode": "discrete"
+        });
+        let t: Trigger = serde_json::from_value(raw).unwrap();
+        match t {
+            Trigger::Midi(m) => {
+                assert_eq!(m.device, None);
+                assert_eq!(m.channel, None);
+                assert_eq!(m.kind, MidiKind::NoteOn);
+                assert_eq!(m.data1, 64);
+                assert_eq!(m.mode, MidiMode::Discrete);
+            }
+            _ => panic!("expected Midi"),
+        }
+    }
 }

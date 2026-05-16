@@ -12,7 +12,7 @@
  */
 
 use crate::actions::{execute_action, execute_knob_step};
-use crate::config::{Action, Config, Mapping};
+use crate::config::{Action, Config, Mapping, Trigger};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
@@ -131,22 +131,23 @@ fn register_all(config: &Arc<RwLock<Config>>, registered: &mut HashMap<i32, (Map
     };
     for mapping in &cfg.mappings {
         if !mapping.enabled { continue; }
-        if mapping.trigger.modifiers.is_empty() { continue; } // bare keys left to rdev
+        let Trigger::Key(combo) = &mapping.trigger else { continue }; // MIDI triggers handled by midi.rs
+        if combo.modifiers.is_empty() { continue; } // bare keys left to rdev
 
-        let mods = modifiers_to_win(&mapping.trigger.modifiers);
+        let mods = modifiers_to_win(&combo.modifiers);
 
         if let Action::Knob { .. } = &mapping.action {
-            if mapping.trigger.key == "ScrollWheel" { continue; }
+            if combo.key == "ScrollWheel" { continue; }
             // Register both VolumeUp (+1) and VolumeDown (-1)
-            if let Some(vk_up) = key_to_vk(&mapping.trigger.key) {
+            if let Some(vk_up) = key_to_vk(&combo.key) {
                 register_one(vk_up, mods, mapping, Some(1.0), registered, next_id);
             }
-            if let Some(sibling) = knob_sibling(&mapping.trigger.key) {
+            if let Some(sibling) = knob_sibling(&combo.key) {
                 if let Some(vk_down) = key_to_vk(sibling) {
                     register_one(vk_down, mods, mapping, Some(-1.0), registered, next_id);
                 }
             }
-        } else if let Some(vk) = key_to_vk(&mapping.trigger.key) {
+        } else if let Some(vk) = key_to_vk(&combo.key) {
             register_one(vk, mods, mapping, None, registered, next_id);
         }
     }

@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Action, KeyCombo, Mapping } from "../models/types";
+import { Action, Mapping, MidiEvent, Trigger, keyTrigger, KeyCombo } from "../models/types";
 
 /** Fetch all saved mappings from the Rust backend. */
 export async function getMappings(): Promise<Mapping[]> {
@@ -36,13 +36,29 @@ export async function getDeviceTree(): Promise<unknown> {
   return invoke<unknown>("get_device_tree");
 }
 
-/** Build a new mapping object with a generated id placeholder. */
-export function createNewMapping(trigger: KeyCombo, action: Action, name: string): Mapping {
+/** List currently-connected MIDI input device names. */
+export async function listMidiDevices(): Promise<string[]> {
+  return invoke<string[]>("list_midi_devices");
+}
+
+/** Arm MIDI capture; resolves with the first matching event (30s timeout in backend). */
+export async function startMidiCapture(device: string | null): Promise<MidiEvent> {
+  return invoke<MidiEvent>("start_midi_capture", { device });
+}
+
+/** Disarm MIDI capture. */
+export async function cancelMidiCapture(): Promise<void> {
+  return invoke<void>("cancel_midi_capture");
+}
+
+/** Build a new mapping object with a generated id. */
+export function createNewMapping(trigger: Trigger | KeyCombo, action: Action, name: string): Mapping {
+  const t: Trigger = "source" in trigger ? trigger : keyTrigger(trigger);
   return {
     id: crypto.randomUUID(),
     name,
     enabled: true,
-    trigger,
+    trigger: t,
     action,
   };
 }

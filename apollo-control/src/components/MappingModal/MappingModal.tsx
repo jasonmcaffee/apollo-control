@@ -1,6 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
 import { FlatControl } from "../../hooks/useDeviceTree";
-import { Action, KnobAction, KeyCombo, Mapping, StepAction } from "../../models/types";
+import {
+  Action,
+  KnobAction,
+  KeyCombo,
+  Mapping,
+  StepAction,
+  Trigger,
+  MidiEvent,
+  MidiMode,
+  keyTrigger,
+  midiTrigger,
+  asKeyCombo,
+  asMidiTrigger,
+} from "../../models/types";
 import {
   CapturedCombo,
   comboLabel,
@@ -10,6 +24,17 @@ import {
   HARDWARE_KNOB_KEYS,
   normalizeKnobKey,
 } from "../../utils/keyTranslation";
+import {
+  eventToMidiTrigger,
+  looksContinuous,
+  midiEventLabel,
+  midiTriggerLabel,
+} from "../../utils/midiTranslation";
+import {
+  cancelMidiCapture,
+  listMidiDevices,
+  startMidiCapture,
+} from "../../client/tauri";
 import "./MappingModal.css";
 
 interface MappingModalProps {
@@ -20,15 +45,65 @@ interface MappingModalProps {
   onClose: () => void;
 }
 
-const MODIFIER_OPTIONS = ["Shift", "Ctrl", "Alt"];
+type Tab = "keyboard" | "midi";
 
-/** Modal for viewing, editing, and capturing key/scroll mappings for a single control. */
+/** Modal for viewing, editing, and capturing key/scroll/MIDI mappings for a single control. */
 export function MappingModal({ control, mappings, onSave, onDelete, onClose }: MappingModalProps) {
+  const [tab, setTab] = useState<Tab>("keyboard");
+
+  return (
+    <div className="mapping-modal__overlay" onClick={onClose}>
+      <div className="mapping-modal" onClick={e => e.stopPropagation()}>
+
+        <header className="mapping-modal__header">
+          <span className="mapping-modal__title">Map — {control.group} {control.label}</span>
+          <button className="mapping-modal__close" onClick={onClose}>✕</button>
+        </header>
+
+        <div className="mapping-modal__tabs">
+          <button
+            className={`mapping-modal__tab${tab === "keyboard" ? " mapping-modal__tab--active" : ""}`}
+            onClick={() => setTab("keyboard")}
+          >Keyboard</button>
+          <button
+            className={`mapping-modal__tab${tab === "midi" ? " mapping-modal__tab--active" : ""}`}
+            onClick={() => setTab("midi")}
+          >MIDI</button>
+        </div>
+
+        {mappings.length > 0 && (
+          <section className="mapping-modal__current">
+            <div className="mapping-modal__section-label">Current mappings</div>
+            {mappings.map(m => (
+              <MappingRow key={m.id} mapping={m} onDelete={() => onDelete(m.id)} />
+            ))}
+          </section>
+        )}
+
+        {tab === "keyboard" && (
+          <KeyboardCapture control={control} onSave={onSave} onClose={onClose} />
+        )}
+        {tab === "midi" && (
+          <MidiCapture control={control} onSave={onSave} onClose={onClose} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Keyboard capture (extracted from previous implementation) ──────────────
+
+interface CaptureProps {
+  control: FlatControl;
+  onSave: (mapping: Mapping) => void;
+  onClose: () => void;
+}
+
+/** Keyboard / scroll / hardware-knob capture pane. */
+function KeyboardCapture({ control, onSave, onClose }: CaptureProps) {
   const [captured, setCaptured] = useState<CapturedCombo | null>(null);
   const [liveModifiers, setLiveModifiers] = useState<string[]>([]);
   const [direction, setDirection] = useState<"pos" | "neg">("pos");
-  const [knobMods, setKnobMods] = useState<string[]>([]);
-
   const isNumeric = control.type !== "bool";
   const isScrollCapture = captured?.kind === "scroll";
   const isKeyboardCapture = captured?.kind === "keyboard";
@@ -77,7 +152,6 @@ export function MappingModal({ control, mappings, onSave, onDelete, onClose }: M
     if (captured.kind === "scroll") {
       trigger = scrollToKeyCombo(captured.modifiers);
     } else if (isKnobCapture) {
-      // Normalize VolumeUp/Down to canonical "VolumeUp" anchor so both directions fire
       trigger = { modifiers: captured.combo.modifiers, key: normalizeKnobKey(captured.combo.key) };
     } else {
       trigger = captured.combo;
@@ -88,132 +162,277 @@ export function MappingModal({ control, mappings, onSave, onDelete, onClose }: M
     const isKnob = captured.kind === "scroll" || isKnobCapture;
     const dirLabel = isKnob ? "Knob" : direction === "pos" ? "▲" : "▼";
     const name = `${control.group} ${control.label} ${dirLabel} (${label})`;
-    onSave({ id: crypto.randomUUID(), name, enabled: true, trigger, action });
+    onSave({ id: crypto.randomUUID(), name, enabled: true, trigger: keyTrigger(trigger), action });
     onClose();
-  };
-
-  /** Save a Volume Knob (VolumeUp/VolumeDown pair) mapping with the chosen modifiers. */
-  const handleSaveVolumeKnob = () => {
-    const trigger: KeyCombo = { modifiers: knobMods, key: "VolumeUp" };
-    const min = control.min ?? -96;
-    const max = control.max ?? 0;
-    const step = computeStep(min, max);
-    const action: KnobAction = { type: "Knob", path: control.path, step, min, max };
-    const modLabel = knobMods.length ? knobMods.join("+") + " + " : "";
-    const name = `${control.group} ${control.label} Knob (${modLabel}Volume Knob)`;
-    onSave({ id: crypto.randomUUID(), name, enabled: true, trigger, action });
-    onClose();
-  };
-
-  /** Toggle a modifier in the hardware knob section. */
-  const toggleKnobMod = (mod: string) => {
-    setKnobMods(prev => prev.includes(mod) ? prev.filter(m => m !== mod) : [...prev, mod]);
   };
 
   const liveLabel = getLiveLabel(captured, liveModifiers);
 
   return (
-    <div className="mapping-modal__overlay" onClick={onClose}>
-      <div className="mapping-modal" onClick={e => e.stopPropagation()}>
+    <>
+      <section className="mapping-modal__capture">
+        <div className="mapping-modal__section-label">
+          {isNumeric ? "Or press a key combo / scroll to capture" : "Press a key combo to capture"}
+        </div>
+        <div className={`mapping-modal__live${captured ? " mapping-modal__live--captured" : ""}`}>
+          {liveLabel}
+        </div>
 
-        <header className="mapping-modal__header">
-          <span className="mapping-modal__title">Map — {control.group} {control.label}</span>
-          <button className="mapping-modal__close" onClick={onClose}>✕</button>
-        </header>
-
-        {mappings.length > 0 && (
-          <section className="mapping-modal__current">
-            <div className="mapping-modal__section-label">Current mappings</div>
-            {mappings.map(m => (
-              <MappingRow key={m.id} mapping={m} onDelete={() => onDelete(m.id)} />
-            ))}
-          </section>
+        {showDirectionPicker && (
+          <div className="mapping-modal__direction">
+            <button
+              className={`mapping-modal__dir-btn${direction === "pos" ? " mapping-modal__dir-btn--active" : ""}`}
+              onClick={() => setDirection("pos")}
+            >▲ Increase</button>
+            <button
+              className={`mapping-modal__dir-btn${direction === "neg" ? " mapping-modal__dir-btn--active" : ""}`}
+              onClick={() => setDirection("neg")}
+            >▼ Decrease</button>
+          </div>
         )}
 
-        {isNumeric && (
-          <section className="mapping-modal__hardware-knob">
-            <div className="mapping-modal__section-label">Volume Knob (keyboard media key)</div>
-            <div className="mapping-modal__knob-row">
-              <div className="mapping-modal__knob-mods">
-                {MODIFIER_OPTIONS.map(mod => (
-                  <button
-                    key={mod}
-                    className={`mapping-modal__mod-btn${knobMods.includes(mod) ? " mapping-modal__mod-btn--active" : ""}`}
-                    onClick={() => toggleKnobMod(mod)}
-                  >
-                    {mod}
-                  </button>
-                ))}
-              </div>
-              <span className="mapping-modal__knob-label">
-                {knobMods.length ? knobMods.join(" + ") + " + " : ""}Volume Knob
-              </span>
-              <button className="mapping-modal__btn mapping-modal__btn--save" onClick={handleSaveVolumeKnob}>
-                Map
-              </button>
-            </div>
-          </section>
+        {(isScrollCapture || isKnobCapture) && (
+          <div className="mapping-modal__scroll-note">
+            Knob will increase or decrease based on direction
+          </div>
         )}
+      </section>
 
-        <section className="mapping-modal__capture">
-          <div className="mapping-modal__section-label">
-            {isNumeric ? "Or press a key combo / scroll to capture" : "Press a key combo to capture"}
-          </div>
-          <div className={`mapping-modal__live${captured ? " mapping-modal__live--captured" : ""}`}>
-            {liveLabel}
-          </div>
-
-          {showDirectionPicker && (
-            <div className="mapping-modal__direction">
-              <button
-                className={`mapping-modal__dir-btn${direction === "pos" ? " mapping-modal__dir-btn--active" : ""}`}
-                onClick={() => setDirection("pos")}
-              >▲ Increase</button>
-              <button
-                className={`mapping-modal__dir-btn${direction === "neg" ? " mapping-modal__dir-btn--active" : ""}`}
-                onClick={() => setDirection("neg")}
-              >▼ Decrease</button>
-            </div>
-          )}
-
-          {(isScrollCapture || isKnobCapture) && (
-            <div className="mapping-modal__scroll-note">
-              Knob will increase or decrease based on direction
-            </div>
-          )}
-        </section>
-
-        <footer className="mapping-modal__footer">
-          <button className="mapping-modal__btn mapping-modal__btn--cancel" onClick={onClose}>Cancel</button>
-          <button
-            className="mapping-modal__btn mapping-modal__btn--save"
-            onClick={handleSaveCapture}
-            disabled={!canSave}
-          >
-            Save Mapping
-          </button>
-        </footer>
-      </div>
-    </div>
+      <footer className="mapping-modal__footer">
+        <button className="mapping-modal__btn mapping-modal__btn--cancel" onClick={onClose}>Cancel</button>
+        <button
+          className="mapping-modal__btn mapping-modal__btn--save"
+          onClick={handleSaveCapture}
+          disabled={!canSave}
+        >
+          Save Mapping
+        </button>
+      </footer>
+    </>
   );
 }
+
+// ── MIDI capture pane ──────────────────────────────────────────────────────
+
+/** MIDI Learn pane: device dropdown, live event readout, mode toggle, save. */
+function MidiCapture({ control, onSave, onClose }: CaptureProps) {
+  const [devices, setDevices] = useState<string[]>([]);
+  const [deviceFilter, setDeviceFilter] = useState<string>("__all__");
+  const [captured, setCaptured] = useState<MidiEvent | null>(null);
+  const [latestLive, setLatestLive] = useState<MidiEvent | null>(null);
+  const [mode, setMode] = useState<MidiMode>("discrete");
+  const [discreteAction, setDiscreteAction] = useState<"toggle" | "hold">("toggle");
+  const [learning, setLearning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isNumeric = control.type !== "bool";
+  const prevEventRef = useRef<MidiEvent | null>(null);
+
+  /** Refresh the device list when the modal opens. */
+  useEffect(() => {
+    let alive = true;
+    listMidiDevices().then(d => { if (alive) setDevices(d); }).catch(() => {});
+    const unlistenPromise = listen<string[]>("midi:devices", e => {
+      if (alive) setDevices(e.payload);
+    });
+    return () => {
+      alive = false;
+      unlistenPromise.then(un => un()).catch(() => {});
+    };
+  }, []);
+
+  /** Listen for live MIDI events while the Learn flow is active. */
+  useEffect(() => {
+    if (!learning) return;
+    let unlisten: UnlistenFn | null = null;
+    listen<MidiEvent>("midi:event", e => {
+      const ev = e.payload;
+      setLatestLive(ev);
+      setCaptured(prev => prev ?? ev);
+      // Auto-detect continuous mode by comparing to the previous live event.
+      const prev = prevEventRef.current;
+      if (prev && looksContinuous(prev, ev)) {
+        setMode("continuous");
+      }
+      prevEventRef.current = ev;
+    }).then(un => { unlisten = un; });
+    return () => { if (unlisten) unlisten(); };
+  }, [learning]);
+
+  /** Kick off the backend's capture future. Resolves with the first event. */
+  const handleLearn = async () => {
+    setError(null);
+    setCaptured(null);
+    setLatestLive(null);
+    prevEventRef.current = null;
+    setLearning(true);
+    const device = deviceFilter === "__all__" ? null : deviceFilter;
+    try {
+      const ev = await startMidiCapture(device);
+      // The first event also flows in through the midi:event listener above.
+      setCaptured(prev => prev ?? ev);
+      setLatestLive(prev => prev ?? ev);
+      // Default to continuous for CC/pitch_bend; discrete for notes.
+      if (ev.kind === "cc" || ev.kind === "pitch_bend") setMode("continuous");
+      else setMode("discrete");
+    } catch (e) {
+      setError(String(e));
+    }
+    // Note: capture stays armed on the backend until we cancel — useful for follow-up events.
+  };
+
+  /** Disarm backend capture on unmount or when leaving the tab. */
+  useEffect(() => {
+    return () => {
+      cancelMidiCapture().catch(() => {});
+    };
+  }, []);
+
+  const handleSave = () => {
+    if (!captured) return;
+    const device = deviceFilter === "__all__" ? null : deviceFilter;
+    const trigger = eventToMidiTrigger(captured, device, mode);
+    const action = buildMidiAction(control, mode, discreteAction);
+    if (!action) return;
+    const name = `${control.group} ${control.label} ${mode === "continuous" ? "🎚" : "▶"} (${midiTriggerLabel(trigger)})`;
+    onSave({
+      id: crypto.randomUUID(),
+      name,
+      enabled: true,
+      trigger: midiTrigger(trigger),
+      action,
+    });
+    cancelMidiCapture().catch(() => {});
+    onClose();
+  };
+
+  const handleCancel = () => {
+    cancelMidiCapture().catch(() => {});
+    onClose();
+  };
+
+  const liveLabel = renderMidiLiveLabel(captured, latestLive, learning, error);
+  const canSave = captured !== null && (isNumeric || mode === "discrete");
+
+  return (
+    <>
+      <section className="mapping-modal__capture">
+        <div className="mapping-modal__section-label">MIDI Device</div>
+        <select
+          className="mapping-modal__midi-device"
+          value={deviceFilter}
+          onChange={e => setDeviceFilter(e.target.value)}
+        >
+          <option value="__all__">All devices</option>
+          {devices.map(d => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+
+        <div className="mapping-modal__section-label" style={{ marginTop: 14 }}>
+          MIDI Learn
+        </div>
+        <div className={`mapping-modal__live${captured ? " mapping-modal__live--captured" : ""}`}>
+          {liveLabel}
+        </div>
+
+        <button
+          className="mapping-modal__btn mapping-modal__btn--cancel mapping-modal__learn-btn"
+          onClick={handleLearn}
+          disabled={learning && captured === null}
+        >
+          {learning ? (captured ? "Capture more…" : "Listening…") : "Start Listening"}
+        </button>
+
+        {captured && (
+          <div className="mapping-modal__midi-options">
+            <div className="mapping-modal__section-label">Mode</div>
+            <div className="mapping-modal__direction">
+              <button
+                className={`mapping-modal__dir-btn${mode === "continuous" ? " mapping-modal__dir-btn--active" : ""}`}
+                onClick={() => setMode("continuous")}
+                disabled={!isNumeric}
+                title={!isNumeric ? "Continuous mode requires a numeric control" : undefined}
+              >🎚 Continuous</button>
+              <button
+                className={`mapping-modal__dir-btn${mode === "discrete" ? " mapping-modal__dir-btn--active" : ""}`}
+                onClick={() => setMode("discrete")}
+              >▶ Discrete</button>
+            </div>
+
+            {mode === "discrete" && (
+              <>
+                <div className="mapping-modal__section-label" style={{ marginTop: 10 }}>Action on note</div>
+                <div className="mapping-modal__direction">
+                  <button
+                    className={`mapping-modal__dir-btn${discreteAction === "toggle" ? " mapping-modal__dir-btn--active" : ""}`}
+                    onClick={() => setDiscreteAction("toggle")}
+                  >Toggle</button>
+                  <button
+                    className={`mapping-modal__dir-btn${discreteAction === "hold" ? " mapping-modal__dir-btn--active" : ""}`}
+                    onClick={() => setDiscreteAction("hold")}
+                    disabled={control.type !== "bool"}
+                    title={control.type !== "bool" ? "Hold is only valid on bool controls" : undefined}
+                  >Hold</button>
+                </div>
+              </>
+            )}
+
+            <div className="mapping-modal__scroll-note">
+              {mode === "continuous"
+                ? "Knob/Fader position 0..127 maps to the control range."
+                : "Note On triggers the action."}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <footer className="mapping-modal__footer">
+        <button className="mapping-modal__btn mapping-modal__btn--cancel" onClick={handleCancel}>Cancel</button>
+        <button
+          className="mapping-modal__btn mapping-modal__btn--save"
+          onClick={handleSave}
+          disabled={!canSave}
+        >Save Mapping</button>
+      </footer>
+    </>
+  );
+}
+
+/** Render the live readout in the MIDI learn pane. */
+function renderMidiLiveLabel(captured: MidiEvent | null, live: MidiEvent | null, learning: boolean, error: string | null): string {
+  if (error) return `Error: ${error}`;
+  if (live) return midiEventLabel(live);
+  if (captured) return midiEventLabel(captured);
+  if (learning) return "Listening — move a fader, turn a knob, or play a note…";
+  return "Click \"Start Listening\" and play your controller.";
+}
+
+// ── MappingRow (existing-mappings list inside the modal) ───────────────────
 
 interface MappingRowProps {
   mapping: Mapping;
   onDelete: () => void;
 }
 
-/** Single row showing an existing mapping with its key combo and action summary. */
+/** Single row showing an existing mapping with its trigger and action summary. */
 function MappingRow({ mapping, onDelete }: MappingRowProps) {
-  const triggerLabel = comboLabel(mapping.trigger);
+  const triggerStr = renderTriggerLabel(mapping.trigger);
   const actionLabel = getActionLabel(mapping.action);
   return (
     <div className="mapping-modal__mapping-row">
-      <span className="mapping-modal__mapping-key">⌨ {triggerLabel}</span>
+      <span className="mapping-modal__mapping-key">{triggerStr}</span>
       <span className="mapping-modal__mapping-action">{actionLabel}</span>
       <button className="mapping-modal__mapping-delete" onClick={onDelete} title="Remove mapping">✕</button>
     </div>
   );
+}
+
+function renderTriggerLabel(t: Trigger): string {
+  const kb = asKeyCombo(t);
+  if (kb) return `⌨ ${comboLabel(kb)}`;
+  const midi = asMidiTrigger(t);
+  if (midi) return midiTriggerLabel(midi);
+  return "?";
 }
 
 function getLiveLabel(captured: CapturedCombo | null, liveModifiers: string[]): string {
@@ -252,7 +471,6 @@ function buildCaptureAction(control: FlatControl, captured: CapturedCombo, direc
     return { type: "Knob", path: control.path, step, min, max } satisfies KnobAction;
   }
 
-  // Hardware volume knob (VolumeUp/VolumeDown) → bidirectional Knob action
   if (captured.kind === "keyboard" && HARDWARE_KNOB_KEYS.has(captured.combo.key)) {
     if (control.type === "bool") return null;
     return { type: "Knob", path: control.path, step, min, max } satisfies KnobAction;
@@ -264,6 +482,29 @@ function buildCaptureAction(control: FlatControl, captured: CapturedCombo, direc
 
   const delta = direction === "pos" ? step : -step;
   return { type: "Step", path: control.path, delta, min, max } satisfies StepAction;
+}
+
+/** Map a captured MIDI trigger + chosen mode to an Action against the target control. */
+function buildMidiAction(control: FlatControl, mode: MidiMode, discreteAction: "toggle" | "hold"): Action | null {
+  const min = control.min ?? -96;
+  const max = control.max ?? 0;
+  const step = computeStep(min, max);
+
+  if (mode === "continuous") {
+    if (control.type === "bool") return null;
+    // Knob action is the natural fit — the backend interprets its min/max as the target range.
+    return { type: "Knob", path: control.path, step, min, max } satisfies KnobAction;
+  }
+
+  // Discrete
+  if (control.type === "bool") {
+    if (discreteAction === "hold") {
+      return { type: "Hold", path: control.path, press_value: true, release_value: false };
+    }
+    return { type: "Toggle", path: control.path };
+  }
+  // Numeric + Discrete → step up by one notch on each note-on
+  return { type: "Step", path: control.path, delta: step, min, max } satisfies StepAction;
 }
 
 function computeStep(min: number, max: number): number {

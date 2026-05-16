@@ -1,5 +1,5 @@
 use crate::actions::{execute_action, execute_hold_release, execute_knob_step};
-use crate::config::{Action, Config, KeyCombo, Mapping};
+use crate::config::{Action, Config, KeyCombo, Mapping, Trigger};
 use rdev::{listen, Event, EventType};
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc;
@@ -109,15 +109,16 @@ fn process_key_press(key_name: &str, pressed: &HashSet<String>, held_mappings: &
 
     for mapping in &config.mappings {
         if !mapping.enabled { continue; }
+        let Trigger::Key(combo) = &mapping.trigger else { continue };
 
         // Keyboard Knob: match trigger key OR its directional sibling (e.g. VolumeUp/VolumeDown)
         if let Action::Knob { .. } = &mapping.action {
-            if mapping.trigger.key == "ScrollWheel" { continue; }
-            let direction = match knob_sibling_direction(&mapping.trigger.key, key_name) {
+            if combo.key == "ScrollWheel" { continue; }
+            let direction = match knob_sibling_direction(&combo.key, key_name) {
                 Some(d) => d,
                 None => continue,
             };
-            if !modifiers_match(&mapping.trigger.modifiers, pressed) { continue; }
+            if !modifiers_match(&combo.modifiers, pressed) { continue; }
             if debounced(last_fired, &mapping.id, Duration::from_millis(100)) { continue; }
             let action = mapping.action.clone();
             std::thread::spawn(move || {
@@ -129,7 +130,7 @@ fn process_key_press(key_name: &str, pressed: &HashSet<String>, held_mappings: &
         }
 
         // Normal key combo match
-        if !combo_matches(&mapping.trigger, pressed) { continue; }
+        if !combo_matches(combo, pressed) { continue; }
         if debounced(last_fired, &mapping.id, Duration::from_millis(100)) { continue; }
 
         let action = mapping.action.clone();
@@ -161,7 +162,11 @@ fn debounced(last_fired: &mut HashMap<String, Instant>, id: &str, cooldown: Dura
 /** Release any held mappings whose primary key was just released. */
 fn process_key_release(key_name: &str, held_mappings: &mut Vec<Mapping>) {
     held_mappings.retain(|m| {
-        if m.trigger.key == key_name {
+        let key_match = match &m.trigger {
+            Trigger::Key(c) => c.key == key_name,
+            _ => false,
+        };
+        if key_match {
             let action = m.action.clone();
             std::thread::spawn(move || {
                 if let Err(e) = execute_hold_release(&action) {
@@ -185,8 +190,10 @@ fn process_scroll(delta_y: i64, pressed: &HashSet<String>, state: &Arc<HookState
     let direction = if delta_y > 0 { 1.0_f64 } else { -1.0_f64 };
 
     for mapping in &config.mappings {
-        if !mapping.enabled || mapping.trigger.key != "ScrollWheel" { continue; }
-        if !modifiers_match(&mapping.trigger.modifiers, pressed) { continue; }
+        if !mapping.enabled { continue; }
+        let Trigger::Key(combo) = &mapping.trigger else { continue };
+        if combo.key != "ScrollWheel" { continue; }
+        if !modifiers_match(&combo.modifiers, pressed) { continue; }
         let action = mapping.action.clone();
         std::thread::spawn(move || {
             if let Err(e) = execute_knob_step(&action, direction) {

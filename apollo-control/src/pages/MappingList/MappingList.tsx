@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { MappingEditor } from "../../components/MappingEditor/MappingEditor";
 import { useMappings } from "../../hooks/useMappings";
-import { Mapping } from "../../models/types";
+import { Mapping, Trigger } from "../../models/types";
+import { midiTriggerLabel } from "../../utils/midiTranslation";
 import "./MappingList.css";
 
 /** Main view: table of all configured key-to-Apollo-control mappings with CRUD actions. */
@@ -72,9 +73,7 @@ interface MappingRowProps {
 }
 
 function MappingRow({ mapping, onEdit, onDelete, onToggle }: MappingRowProps) {
-  const combo = [...mapping.trigger.modifiers, mapping.trigger.key]
-    .filter(Boolean)
-    .join(" + ");
+  const combo = triggerLabel(mapping.trigger);
   const actionSummary = summarizeAction(mapping);
 
   return (
@@ -107,6 +106,14 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <button className="mapping-list__add-btn" onClick={onAdd}>+ Add your first mapping</button>
     </div>
   );
+}
+
+/** Build a short human-readable label for the trigger column in the list view. */
+function triggerLabel(t: Trigger): string {
+  if (t.source === "Key") {
+    return [...t.modifiers, t.key].filter(Boolean).join(" + ");
+  }
+  return midiTriggerLabel(t);
 }
 
 function summarizeAction(mapping: Mapping): string {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FlatControl } from "../../hooks/useDeviceTree";
-import { Action, ActionType, KeyCombo, Mapping } from "../../models/types";
+import { Action, ActionType, KeyCombo, Mapping, asKeyCombo, keyTrigger } from "../../models/types";
 import { ControlPicker } from "../ControlPicker/ControlPicker";
 import { KeyCapture } from "../KeyCapture/KeyCapture";
 import "./MappingEditor.css";
@@ -14,7 +14,7 @@ interface MappingEditorProps {
 /** Modal editor for creating or modifying a single key-to-control mapping. */
 export function MappingEditor({ initial, onSave, onCancel }: MappingEditorProps) {
   const [name, setName] = useState(initial?.name ?? "");
-  const [combo, setCombo] = useState<KeyCombo | null>(initial?.trigger ?? null);
+  const [combo, setCombo] = useState<KeyCombo | null>(initial ? asKeyCombo(initial.trigger) : null);
   const [selectedControl, setSelectedControl] = useState<FlatControl | null>(null);
   const [actionType, setActionType] = useState<ActionType>(
     (initial?.action.type as ActionType) ?? "Toggle"
@@ -36,7 +36,7 @@ export function MappingEditor({ initial, onSave, onCancel }: MappingEditorProps)
       id: initial?.id ?? crypto.randomUUID(),
       name: name || `${combo.modifiers.join("+")}+${combo.key} → ${selectedControl.label}`,
       enabled: initial?.enabled ?? true,
-      trigger: combo,
+      trigger: keyTrigger(combo),
       action,
     };
     onSave(mapping);

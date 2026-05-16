@@ -21,6 +21,7 @@ rdev = "0.5"
 uuid = { version = "1", features = ["v4", "serde"] }
 dirs = "5"
 log = "0.4"
+midir = "0.10"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser", "windef", "minwindef"] }

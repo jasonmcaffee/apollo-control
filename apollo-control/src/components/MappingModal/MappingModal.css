@@ -51,6 +51,59 @@
 }
 .mapping-modal__close:hover { color: #ccc; }
 
+/* ── Tabs ────────────────────────────────────── */
+.mapping-modal__tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.mapping-modal__tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.1s, border-color 0.1s, background 0.1s;
+}
+.mapping-modal__tab:hover { background: #1f1f1f; color: #aaa; }
+.mapping-modal__tab--active {
+  color: #a0a0ff;
+  border-bottom-color: #5555aa;
+}
+
+/* ── MIDI device dropdown ───────────────────── */
+.mapping-modal__midi-device {
+  width: 100%;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #d0d0e0;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: inherit;
+}
+.mapping-modal__midi-device:focus {
+  outline: none;
+  border-color: #5555aa;
+}
+
+/* ── MIDI options block ─────────────────────── */
+.mapping-modal__midi-options {
+  margin-top: 12px;
+}
+
+.mapping-modal__learn-btn {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
 /* ── Section label ───────────────────────────── */
 .mapping-modal__section-label {
   font-size: 10px;

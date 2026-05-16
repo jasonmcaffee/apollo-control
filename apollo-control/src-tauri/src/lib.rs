@@ -2,11 +2,13 @@ mod actions;
 mod config;
 mod hook;
 mod hotkeys;
+mod midi;
 mod sdk;
 
 use crate::config::{Config, KeyCombo, Mapping};
 use crate::hook::{spawn_hook, HookState};
 use crate::hotkeys::{spawn_hotkey_manager, HotkeyHandle};
+use crate::midi::{attach_app_handle, spawn_midi_manager, MidiEvent, MidiHandle};
 use crate::sdk::{apollo_get, apollo_set, is_sdk_available};
 use serde_json::Value;
 use std::sync::atomic::AtomicBool;
@@ -20,6 +22,7 @@ struct AppState {
     capturing: Arc<AtomicBool>,
     captured_tx: Arc<Mutex<Option<std::sync::mpsc::Sender<KeyCombo>>>>,
     hotkey_handle: HotkeyHandle,
+    midi_handle: MidiHandle,
 }
 
 // ── IPC commands ──────────────────────────────────────────────────────
@@ -40,6 +43,7 @@ fn save_mapping(mapping: Mapping, state: State<AppState>) -> Result<String, Stri
         id
     };
     state.hotkey_handle.reload();
+    state.midi_handle.reload();
     Ok(id)
 }
 
@@ -52,6 +56,7 @@ fn delete_mapping(id: String, state: State<AppState>) -> Result<(), String> {
         config.save()?;
     }
     state.hotkey_handle.reload();
+    state.midi_handle.reload();
     Ok(())
 }
 
@@ -100,6 +105,35 @@ async fn start_key_capture(state: State<'_, AppState>) -> Result<KeyCombo, Strin
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+/** List MIDI input device names currently connected. */
+#[tauri::command]
+fn list_midi_devices(state: State<AppState>) -> Vec<String> {
+    state.midi_handle.list_devices()
+}
+
+/**
+ * Arm MIDI capture for the optional device filter ("All" if None).
+ * Blocks on a spawn_blocking thread until the first matching event arrives or 30s elapses.
+ * Subsequent events (until `cancel_midi_capture`) are emitted as `midi:event` Tauri events.
+ */
+#[tauri::command]
+async fn start_midi_capture(device: Option<String>, state: State<'_, AppState>) -> Result<MidiEvent, String> {
+    let rx = state.midi_handle.start_capture(device);
+    tokio::task::spawn_blocking(move || {
+        rx.recv_timeout(std::time::Duration::from_secs(30))
+            .map_err(|_| "MIDI capture timed out".to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/** Stop MIDI capture (no-op if not armed). */
+#[tauri::command]
+fn cancel_midi_capture(state: State<AppState>) -> Result<(), String> {
+    state.midi_handle.cancel_capture();
+    Ok(())
 }
 
 /**
@@ -190,10 +224,14 @@ pub fn run() {
     });
     spawn_hook(hook_state);
     let hotkey_handle = spawn_hotkey_manager(config.clone());
+    let midi_handle = spawn_midi_manager(config.clone());
 
     tauri::Builder::default()
-        .manage(AppState { config, capturing, captured_tx, hotkey_handle })
+        .manage(AppState { config, capturing, captured_tx, hotkey_handle, midi_handle })
         .setup(|app| {
+            // Give the MIDI manager an AppHandle so it can emit events to the UI.
+            let state: State<AppState> = app.state();
+            attach_app_handle(&state.midi_handle, app.handle().clone());
             setup_tray(app)?;
             Ok(())
         })
@@ -205,6 +243,9 @@ pub fn run() {
             set_control_value,
             sdk_status,
             start_key_capture,
+            list_midi_devices,
+            start_midi_capture,
+            cancel_midi_capture,
             get_device_tree,
         ])
         .run(tauri::generate_context!())

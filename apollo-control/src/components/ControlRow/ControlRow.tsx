@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Mapping } from "../../models/types";
+import { Mapping, asKeyCombo, asMidiTrigger } from "../../models/types";
 import { FlatControl } from "../../hooks/useDeviceTree";
 import { comboLabel } from "../../utils/keyTranslation";
+import { midiTriggerLabel } from "../../utils/midiTranslation";
 import "./ControlRow.css";
 
 interface ControlRowProps {
@@ -101,13 +102,22 @@ function MapBtn({ summary, onClick }: MapBtnProps) {
 /** Returns a short label representing the most relevant mapping for a control. */
 function getMappingSummary(mappings: Mapping[]): string | null {
   if (mappings.length === 0) return null;
-  const knob = mappings.find(m => m.action.type === "Knob" || m.trigger.key === "ScrollWheel");
+  const knob = mappings.find(m => {
+    const c = asKeyCombo(m.trigger);
+    return m.action.type === "Knob" || (c && c.key === "ScrollWheel");
+  });
   if (knob) {
-    const mods = knob.trigger.modifiers;
-    return mods.length ? `${mods.join("+")} + Scroll` : "Scroll Wheel";
+    const c = asKeyCombo(knob.trigger);
+    if (c) {
+      return c.modifiers.length ? `${c.modifiers.join("+")} + Scroll` : "Scroll Wheel";
+    }
   }
   const first = mappings[0];
-  return comboLabel(first.trigger);
+  const kb = asKeyCombo(first.trigger);
+  if (kb) return comboLabel(kb);
+  const midi = asMidiTrigger(first.trigger);
+  if (midi) return midiTriggerLabel(midi);
+  return null;
 }
 
 function computeStep(min: number, max: number): number {
