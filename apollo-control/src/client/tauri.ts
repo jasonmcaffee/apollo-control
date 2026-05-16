@@ -81,9 +81,11 @@ export function createNewMapping(trigger: Trigger | KeyCombo, action: Action, na
 
 const mockValues: Record<string, unknown> = {
   "monitor/level": -18,
+  "monitor/dim_atten": -12,
   "monitor/mute": false,
   "monitor/dim": false,
   "monitor/mono": false,
+  "monitor/alt": false,
   "hp1/level": -12,
   "hp1/mute": false,
   "hp2/level": -24,
@@ -92,16 +94,22 @@ const mockValues: Record<string, unknown> = {
   "aux1/send/1": -42,
   "aux2/send/0": -28,
   "aux2/send/1": -28,
+  "in1/gain": 36,
   "in1/fader": -6,
   "in1/pan": -30,
   "in1/phantom": true,
   "in1/pad": false,
   "in1/polarity": false,
+  "in1/mute": false,
+  "in1/solo": false,
+  "in2/gain": 28,
   "in2/fader": -10,
   "in2/pan": 20,
   "in2/phantom": false,
   "in2/pad": true,
   "in2/polarity": false,
+  "in2/mute": false,
+  "in2/solo": true,
 };
 
 const mockMappings: Mapping[] = [
@@ -142,9 +150,11 @@ const mockDeviceTree = {
         label: "Monitor",
         controls: [
           { label: "Level", path: "monitor/level", type: "float", min: -96, max: 0 },
+          { label: "Dim Atten", path: "monitor/dim_atten", type: "float", min: -40, max: 0 },
           { label: "Mute", path: "monitor/mute", type: "bool" },
           { label: "Dim", path: "monitor/dim", type: "bool" },
           { label: "Mono", path: "monitor/mono", type: "bool" },
+          { label: "Alt Monitor", path: "monitor/alt", type: "bool" },
         ],
       },
       headphones: [
@@ -183,8 +193,11 @@ const mockDeviceTree = {
         {
           label: "Analog 1",
           controls: [
+            { label: "Gain", path: "in1/gain", type: "float", min: 0, max: 65 },
             { label: "Fader", path: "in1/fader", type: "float", min: -96, max: 12 },
             { label: "Pan", path: "in1/pan", type: "float", min: -100, max: 100 },
+            { label: "Mute", path: "in1/mute", type: "bool" },
+            { label: "Solo", path: "in1/solo", type: "bool" },
             { label: "48V", path: "in1/phantom", type: "bool" },
             { label: "Pad", path: "in1/pad", type: "bool" },
             { label: "Polarity", path: "in1/polarity", type: "bool" },
@@ -193,8 +206,11 @@ const mockDeviceTree = {
         {
           label: "Analog 2",
           controls: [
+            { label: "Gain", path: "in2/gain", type: "float", min: 0, max: 65 },
             { label: "Fader", path: "in2/fader", type: "float", min: -96, max: 12 },
             { label: "Pan", path: "in2/pan", type: "float", min: -100, max: 100 },
+            { label: "Mute", path: "in2/mute", type: "bool" },
+            { label: "Solo", path: "in2/solo", type: "bool" },
             { label: "48V", path: "in2/phantom", type: "bool" },
             { label: "Pad", path: "in2/pad", type: "bool" },
             { label: "Polarity", path: "in2/polarity", type: "bool" },

@@ -23,14 +23,32 @@ export function ControlRow({ control, value, mappings, onSetValue, onOpenModal }
   return <NumericRow control={control} value={value} mappings={mappings} onSetValue={onSetValue} onOpenModal={onOpenModal} />;
 }
 
-/** Bool control row: neumorphic toggle pill plus map button. */
+/** Header: label on the left, map icon (mapped = blue) on the right. */
+function ControlHeader({ label, mapped, summary, onMapClick }: { label: string; mapped: boolean; summary: string | null; onMapClick: () => void }) {
+  return (
+    <div className="ctrl-row__header">
+      <span className="ctrl-row__label">{label}</span>
+      <button
+        type="button"
+        className={`ctrl-row__map-btn${mapped ? " ctrl-row__map-btn--mapped" : ""}`}
+        onClick={onMapClick}
+        title={mapped ? `Mapped: ${summary} — click to edit` : "Click to assign a key"}
+        aria-label={mapped ? `Mapped: ${summary}` : "Assign a key"}
+      >
+        <BsKeyboard size={14} />
+      </button>
+    </div>
+  );
+}
+
+/** Bool control row: header (label + map icon) on top, neumorphic toggle below. */
 function BoolRow({ control, value, mappings, onSetValue, onOpenModal }: ControlRowProps) {
   const isOn = value === true || value === 1;
   const summary = getMappingSummary(mappings);
 
   return (
     <div className="ctrl-row ctrl-row--bool">
-      <span className="ctrl-row__label">{control.label}</span>
+      <ControlHeader label={control.label} mapped={summary !== null} summary={summary} onMapClick={onOpenModal} />
       <button
         className={`ctrl-row__toggle${isOn ? " ctrl-row__toggle--on" : ""}`}
         onClick={() => onSetValue(control.path, !isOn)}
@@ -42,12 +60,11 @@ function BoolRow({ control, value, mappings, onSetValue, onOpenModal }: ControlR
         </span>
         <span className="ctrl-row__toggle-label">{isOn ? "ON" : "OFF"}</span>
       </button>
-      <MapBtn summary={summary} onClick={onOpenModal} />
     </div>
   );
 }
 
-/** Numeric control row: circular knob with center value + map button. */
+/** Numeric control row: header (label + map icon) on top, circular knob below. */
 function NumericRow({ control, value, mappings, onSetValue, onOpenModal }: ControlRowProps) {
   const min = control.min ?? -96;
   const max = control.max ?? 0;
@@ -60,6 +77,7 @@ function NumericRow({ control, value, mappings, onSetValue, onOpenModal }: Contr
 
   return (
     <div className="ctrl-row ctrl-row--numeric">
+      <ControlHeader label={control.label} mapped={summary !== null} summary={summary} onMapClick={onOpenModal} />
       <CircularKnob
         min={min}
         max={max}
@@ -68,33 +86,10 @@ function NumericRow({ control, value, mappings, onSetValue, onOpenModal }: Contr
         onChange={next => { setLocalVal(next); onSetValue(control.path, next); }}
         onLiveChange={setLocalVal}
         format={v => formatNum(v, control)}
-        label={control.label}
         ariaLabel={`${control.group} ${control.label}`}
         size="md"
       />
-      <MapBtn summary={summary} onClick={onOpenModal} />
     </div>
-  );
-}
-
-interface MapBtnProps {
-  summary: string | null;
-  onClick: () => void;
-}
-
-/** Pill (when mapped) or circular icon button (when not) — opens the mapping modal. */
-function MapBtn({ summary, onClick }: MapBtnProps) {
-  const mapped = summary !== null;
-  return (
-    <button
-      className={`ctrl-row__map-btn${mapped ? " ctrl-row__map-btn--mapped" : " ctrl-row__map-btn--icon"}`}
-      onClick={onClick}
-      title={mapped ? `Mapped: ${summary} — click to edit` : "Click to assign a key"}
-      aria-label={mapped ? `Mapped: ${summary}` : "Assign a key"}
-    >
-      <BsKeyboard className="ctrl-row__map-icon" size={14} />
-      {mapped && <span className="ctrl-row__map-text">{summary}</span>}
-    </button>
   );
 }
 

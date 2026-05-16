@@ -7,19 +7,15 @@ import { useMappings } from "../../hooks/useMappings";
 import { Mapping } from "../../models/types";
 import "./ControlPanel.css";
 
-interface ControlPanelProps {
-  onShowMappings: () => void;
-}
-
 /** Main control surface panel: shows all Apollo controls with live values and inline key mapping. */
-export function ControlPanel({ onShowMappings }: ControlPanelProps) {
+export function ControlPanel() {
   const { controls, loading: treeLoading } = useDeviceTree();
   const { values, loading: valLoading, sdkAvailable, setValue } = useControlValues(controls);
   const { mappings, upsert: saveMappingFn, remove: deleteMapping } = useMappings();
   const [modalControl, setModalControl] = useState<FlatControl | null>(null);
   const handleCloseModal = useCallback(() => setModalControl(null), []);
 
-  const groups = useMemo(() => groupControls(controls), [controls]);
+  const rows = useMemo(() => groupControlsByRow(controls), [controls]);
 
   const mappingsByPath = useMemo(() => {
     const map: Record<string, Mapping[]> = {};
@@ -48,21 +44,22 @@ export function ControlPanel({ onShowMappings }: ControlPanelProps) {
             {sdkAvailable ? "Live" : "Offline"}
           </span>
         </div>
-        <button className="control-panel__mappings-btn" onClick={onShowMappings}>
-          Mappings
-        </button>
       </header>
 
       <div className="control-panel__grid">
-        {groups.map(group => (
-          <ControlSection
-            key={group.name}
-            group={group}
-            values={values}
-            mappingsByPath={mappingsByPath}
-            onSetValue={setValue}
-            onOpenModal={setModalControl}
-          />
+        {rows.map((row, i) => (
+          <div key={i} className="control-panel__row">
+            {row.map(group => (
+              <ControlSection
+                key={group.name}
+                group={group}
+                values={values}
+                mappingsByPath={mappingsByPath}
+                onSetValue={setValue}
+                onOpenModal={setModalControl}
+              />
+            ))}
+          </div>
         ))}
       </div>
 
@@ -82,7 +79,6 @@ export function ControlPanel({ onShowMappings }: ControlPanelProps) {
 interface ControlSectionGroup {
   name: string;
   controls: FlatControl[];
-  wide?: boolean;
 }
 
 interface ControlSectionProps {
@@ -94,37 +90,58 @@ interface ControlSectionProps {
 }
 
 function ControlSection({ group, values, mappingsByPath, onSetValue, onOpenModal }: ControlSectionProps) {
+  const numerics = group.controls.filter(c => c.type !== "bool");
+  const bools = group.controls.filter(c => c.type === "bool");
+  const slug = group.name.toLowerCase().replace(/\s+/g, "-");
   return (
-    <div className={`ctrl-section${group.wide ? " ctrl-section--wide" : ""}`}>
+    <div className={`ctrl-section ctrl-section--${slug}`}>
       <div className="ctrl-section__name">{group.name}</div>
-      <div className="ctrl-section__controls">
-        {group.controls.map(ctrl => (
-          <ControlRow
-            key={ctrl.path}
-            control={ctrl}
-            value={values[ctrl.path]}
-            mappings={mappingsByPath[ctrl.path] ?? []}
-            onSetValue={onSetValue}
-            onOpenModal={() => onOpenModal(ctrl)}
-          />
-        ))}
-      </div>
+      {numerics.length > 0 && (
+        <div className="ctrl-section__knobs">
+          {numerics.map(ctrl => (
+            <ControlRow
+              key={ctrl.path}
+              control={ctrl}
+              value={values[ctrl.path]}
+              mappings={mappingsByPath[ctrl.path] ?? []}
+              onSetValue={onSetValue}
+              onOpenModal={() => onOpenModal(ctrl)}
+            />
+          ))}
+        </div>
+      )}
+      {bools.length > 0 && (
+        <div className="ctrl-section__bools">
+          {bools.map(ctrl => (
+            <ControlRow
+              key={ctrl.path}
+              control={ctrl}
+              value={values[ctrl.path]}
+              mappings={mappingsByPath[ctrl.path] ?? []}
+              onSetValue={onSetValue}
+              onOpenModal={() => onOpenModal(ctrl)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-/** Group the flat control list into display sections. */
-function groupControls(controls: FlatControl[]): ControlSectionGroup[] {
+const ROWS: string[][] = [
+  ["Monitor", "Analog 1", "Analog 2"],
+  ["Aux 1", "Aux 2", "HP 1", "HP 2"],
+];
+
+/** Group the flat control list into ordered rows of display sections. */
+function groupControlsByRow(controls: FlatControl[]): ControlSectionGroup[][] {
   const byGroup: Record<string, FlatControl[]> = {};
   controls.forEach(c => {
     if (!byGroup[c.group]) byGroup[c.group] = [];
     byGroup[c.group].push(c);
   });
 
-  const ORDER = ["Monitor", "HP 1", "HP 2", "Aux 1", "Aux 2", "Analog 1", "Analog 2"];
-  const WIDE = ["Analog 1", "Analog 2"];
-
-  return ORDER
-    .filter(name => byGroup[name])
-    .map(name => ({ name, controls: byGroup[name], wide: WIDE.includes(name) }));
+  return ROWS
+    .map(row => row.filter(name => byGroup[name]).map(name => ({ name, controls: byGroup[name] })))
+    .filter(row => row.length > 0);
 }
