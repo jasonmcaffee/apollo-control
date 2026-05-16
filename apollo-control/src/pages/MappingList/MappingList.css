@@ -1,105 +1,190 @@
+/* Neumorphic mapping list — toolbar + raised card wrapping the table. */
 .mapping-list {
-  padding: 24px;
-  min-height: 100vh;
+  padding: 4px 4px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
 }
 
-.mapping-list__header {
+.mapping-list__toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 4px 6px;
 }
 
-.mapping-list__title {
-  font-size: 22px;
-  font-weight: 700;
-  color: #e0e0e0;
-  margin: 0;
+.mapping-list__count {
+  font: 500 11px/1.4 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-500);
 }
 
 .mapping-list__add-btn {
-  padding: 8px 18px;
-  background: #6e6ef5;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--grad-primary);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: var(--r-pill);
+  font: 500 13px/1.4 var(--font-sans);
   cursor: pointer;
-  transition: background 0.15s;
+  box-shadow:
+    -4px -4px 10px var(--shadow-light),
+     4px  4px 12px rgba(29, 79, 219, 0.35),
+    inset  1px  1px 1px rgba(255, 255, 255, 0.25),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.15);
+  transition: filter 0.15s ease;
 }
 
-.mapping-list__add-btn:hover { background: #8080ff; }
+.mapping-list__add-btn:hover { filter: brightness(1.08); }
+.mapping-list__add-btn:active {
+  box-shadow:
+    inset 2px 2px 6px rgba(29, 79, 219, 0.5),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.15);
+}
+
+/* ── Card wrapper ────────────────────────────── */
+.mapping-list__card {
+  background: var(--surface-1);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e-pressed-sm);
+  padding: 4px 8px;
+  overflow-x: auto;
+}
 
 .mapping-list__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font: 400 13px/1.5 var(--font-sans);
 }
 
 .mapping-list__table th {
   text-align: left;
-  padding: 8px 12px;
-  color: #888;
-  font-weight: 600;
-  font-size: 12px;
+  padding: 12px 12px 10px;
+  color: var(--ink-500);
+  font: 500 10px/1.4 var(--font-mono);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid #333;
+  letter-spacing: 0.14em;
+  border-bottom: 1px solid var(--surface-sunken);
 }
 
 .mapping-list__table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #222;
-  color: #d0d0d0;
+  padding: 12px 12px;
+  border-bottom: 1px solid var(--surface-sunken);
+  color: var(--ink-900);
   vertical-align: middle;
 }
+
+.mapping-list__table tr:last-child td { border-bottom: none; }
 
 .mapping-list__row--disabled td {
   opacity: 0.45;
 }
 
 .mapping-list__combo {
-  font-family: monospace;
-  font-size: 13px;
-  color: #a0a0ff;
+  font: 500 12px/1.4 var(--font-mono);
+  color: var(--accent-blue);
+  white-space: nowrap;
+}
+
+.mapping-list__name {
+  color: var(--ink-900);
+  font-weight: 500;
 }
 
 .mapping-list__action-summary {
-  color: #999;
-  font-size: 13px;
+  color: var(--ink-500);
+  font-size: 12px;
 }
 
+/* ── Toggle switch ───────────────────────────── */
+.mapping-list__switch {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+}
+
+.mapping-list__switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.mapping-list__switch-track {
+  display: block;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--surface-sunken);
+  border-radius: var(--r-pill);
+  box-shadow: var(--e-pressed-sm);
+  transition: background 0.18s ease;
+}
+
+.mapping-list__switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--grad-knob);
+  box-shadow: -1px -1px 2px rgba(255, 255, 255, 0.8), 1px 1px 3px rgba(120, 130, 150, 0.55);
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mapping-list__switch input:checked ~ .mapping-list__switch-track {
+  background: linear-gradient(90deg, var(--accent-mint), #59d6b3);
+  box-shadow: inset 1px 1px 3px rgba(0,0,0,0.18);
+}
+
+.mapping-list__switch input:checked ~ .mapping-list__switch-track .mapping-list__switch-thumb {
+  transform: translateX(16px);
+}
+
+/* ── Row actions ─────────────────────────────── */
 .mapping-list__actions {
   display: flex;
   gap: 6px;
+  justify-content: flex-end;
 }
 
-.mapping-list__btn {
-  padding: 4px 10px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: #2a2a2a;
-  color: #ccc;
-  font-size: 12px;
-  cursor: pointer;
-  transition: border-color 0.1s;
+.mapping-list__btn--danger {
+  color: var(--ink-500);
 }
 
-.mapping-list__btn:hover { border-color: #6e6ef5; color: #fff; }
+.mapping-list__btn--danger:hover {
+  color: var(--danger) !important;
+}
 
-.mapping-list__btn--danger:hover { border-color: #f87171; color: #f87171; }
-
+/* ── Empty / state placeholders ──────────────── */
 .mapping-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
   text-align: center;
   padding: 60px 24px;
-  color: #666;
+  color: var(--ink-500);
+  background: var(--surface-1);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e-pressed-sm);
+  font: 400 14px/1.5 var(--font-sans);
 }
+
+.mapping-list__empty p { margin: 0; }
 
 .mapping-list__state {
-  padding: 40px;
+  padding: 60px 24px;
   text-align: center;
-  color: #888;
+  color: var(--ink-500);
+  font: 400 14px/1.4 var(--font-sans);
 }
 
-.mapping-list__state--error { color: #f87171; }
+.mapping-list__state--error { color: var(--danger); }

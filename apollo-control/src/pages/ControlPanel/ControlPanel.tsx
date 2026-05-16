@@ -41,9 +41,12 @@ export function ControlPanel({ onShowMappings }: ControlPanelProps) {
         <div className="control-panel__title">
           <span className="control-panel__title-text">Apollo Control</span>
           <span
-            className={`control-panel__sdk-dot${sdkAvailable ? " control-panel__sdk-dot--ok" : " control-panel__sdk-dot--err"}`}
+            className="control-panel__sdk-chip"
             title={sdkAvailable ? "SDK connected" : "SDK not reachable"}
-          />
+          >
+            <span className={`control-panel__sdk-dot${sdkAvailable ? " control-panel__sdk-dot--ok" : " control-panel__sdk-dot--err"}`} />
+            {sdkAvailable ? "Live" : "Offline"}
+          </span>
         </div>
         <button className="control-panel__mappings-btn" onClick={onShowMappings}>
           Mappings

@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./App.css";
 import { ControlPanel } from "./pages/ControlPanel/ControlPanel";
 import { MappingList } from "./pages/MappingList/MappingList";
+import { Modal } from "./components/common/Modal/Modal";
 
 /** Root component — ControlPanel is primary; MappingList slides in as a drawer. */
 function App() {
@@ -12,15 +13,13 @@ function App() {
       <ControlPanel onShowMappings={() => setShowMappings(true)} />
 
       {showMappings && (
-        <div className="app__drawer-overlay" onClick={() => setShowMappings(false)}>
-          <div className="app__drawer" onClick={e => e.stopPropagation()}>
-            <div className="app__drawer-header">
-              <span>Mappings</span>
-              <button className="app__drawer-close" onClick={() => setShowMappings(false)}>✕</button>
-            </div>
-            <MappingList />
-          </div>
-        </div>
+        <Modal
+          variant="drawer"
+          onClose={() => setShowMappings(false)}
+          title="Mappings"
+        >
+          <MappingList />
+        </Modal>
       )}
     </div>
   );

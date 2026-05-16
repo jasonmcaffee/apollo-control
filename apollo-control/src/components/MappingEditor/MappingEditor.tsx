@@ -3,6 +3,7 @@ import { FlatControl } from "../../hooks/useDeviceTree";
 import { Action, ActionType, KeyCombo, Mapping, asKeyCombo, keyTrigger } from "../../models/types";
 import { ControlPicker } from "../ControlPicker/ControlPicker";
 import { KeyCapture } from "../KeyCapture/KeyCapture";
+import { Modal } from "../common/Modal/Modal";
 import "./MappingEditor.css";
 
 interface MappingEditorProps {
@@ -45,64 +46,63 @@ export function MappingEditor({ initial, onSave, onCancel }: MappingEditorProps)
   const canSave = combo !== null && selectedControl !== null;
 
   return (
-    <div className="mapping-editor-overlay" onClick={onCancel}>
-      <div className="mapping-editor" onClick={e => e.stopPropagation()}>
-        <h2 className="mapping-editor__title">
-          {initial ? "Edit Mapping" : "New Mapping"}
-        </h2>
+    <Modal
+      onClose={onCancel}
+      title={initial ? "Edit Mapping" : "New Mapping"}
+      windowClassName="mapping-editor__window"
+      contentClassName="mapping-editor__content"
+    >
+      <label className="mapping-editor__label">Name (optional)</label>
+      <input
+        className="mapping-editor__input"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="Auto-generated if blank"
+      />
 
-        <label className="mapping-editor__label">Name (optional)</label>
-        <input
-          className="mapping-editor__input"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          placeholder="Auto-generated if blank"
-        />
+      <label className="mapping-editor__label">Key Combo</label>
+      <KeyCapture value={combo} onChange={setCombo} />
 
-        <label className="mapping-editor__label">Key Combo</label>
-        <KeyCapture value={combo} onChange={setCombo} />
+      <label className="mapping-editor__label">Apollo Control</label>
+      <ControlPicker value={selectedControl} onChange={setSelectedControl} />
 
-        <label className="mapping-editor__label">Apollo Control</label>
-        <ControlPicker value={selectedControl} onChange={setSelectedControl} />
-
-        <label className="mapping-editor__label">Action</label>
-        <div className="mapping-editor__action-row">
-          <select
-            className="mapping-editor__select"
-            value={actionType}
-            onChange={e => setActionType(e.target.value as ActionType)}
-          >
-            <option value="Toggle">Toggle (bool)</option>
-            <option value="Step">Step (±value)</option>
-            <option value="Set">Set (absolute)</option>
-            <option value="Hold">Hold (while held)</option>
-          </select>
-          {actionType === "Step" && (
-            <input
-              className="mapping-editor__input mapping-editor__input--delta"
-              type="number"
-              value={delta}
-              step={0.5}
-              onChange={e => setDelta(Number(e.target.value))}
-              placeholder="Delta"
-            />
-          )}
-        </div>
-
-        <div className="mapping-editor__footer">
-          <button className="mapping-editor__btn mapping-editor__btn--cancel" onClick={onCancel}>
-            Cancel
-          </button>
-          <button
-            className="mapping-editor__btn mapping-editor__btn--save"
-            onClick={handleSave}
-            disabled={!canSave}
-          >
-            Save
-          </button>
-        </div>
+      <label className="mapping-editor__label">Action</label>
+      <div className="mapping-editor__action-row">
+        <select
+          className="mapping-editor__select"
+          value={actionType}
+          onChange={e => setActionType(e.target.value as ActionType)}
+        >
+          <option value="Toggle">Toggle (bool)</option>
+          <option value="Step">Step (±value)</option>
+          <option value="Set">Set (absolute)</option>
+          <option value="Hold">Hold (while held)</option>
+        </select>
+        {actionType === "Step" && (
+          <input
+            className="mapping-editor__input mapping-editor__input--delta"
+            type="number"
+            value={delta}
+            step={0.5}
+            onChange={e => setDelta(Number(e.target.value))}
+            placeholder="Delta"
+          />
+        )}
       </div>
-    </div>
+
+      <div className="mapping-editor__footer">
+        <button className="mapping-editor__btn mapping-editor__btn--cancel" onClick={onCancel}>
+          Cancel
+        </button>
+        <button
+          className="mapping-editor__btn mapping-editor__btn--save"
+          onClick={handleSave}
+          disabled={!canSave}
+        >
+          Save
+        </button>
+      </div>
+    </Modal>
   );
 }
 

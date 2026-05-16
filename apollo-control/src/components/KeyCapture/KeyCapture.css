@@ -1,39 +1,39 @@
+/* Neumorphic key-capture button — raised by default, pressed + accent when capturing. */
 .key-capture {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .key-capture__btn {
-  padding: 8px 16px;
-  border: 2px solid #555;
-  border-radius: 6px;
-  background: #1e1e1e;
-  color: #e0e0e0;
-  font-family: monospace;
-  font-size: 14px;
+  padding: 11px 18px;
+  background: var(--surface-1);
+  border: none;
+  border-radius: var(--r-md);
+  box-shadow: var(--e-raised-sm);
+  color: var(--ink-900);
+  font: 500 13px/1.4 var(--font-mono);
   cursor: pointer;
-  min-width: 220px;
+  min-width: 240px;
   text-align: center;
-  transition: border-color 0.15s, background 0.15s;
+  transition: color 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: 0.02em;
 }
 
-.key-capture__btn:hover {
-  border-color: #6e6ef5;
-}
+.key-capture__btn:hover { color: var(--accent-blue); }
 
 .key-capture__btn--active {
-  border-color: #6e6ef5;
-  background: #2a2a4a;
-  animation: pulse 1s infinite;
+  box-shadow: var(--e-pressed-sm);
+  color: var(--accent-blue);
+  animation: key-capture-pulse 1s infinite;
 }
 
-@keyframes pulse {
+@keyframes key-capture-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
 }
 
 .key-capture__error {
-  font-size: 12px;
-  color: #f87171;
+  font: 400 12px/1.4 var(--font-sans);
+  color: var(--danger);
 }

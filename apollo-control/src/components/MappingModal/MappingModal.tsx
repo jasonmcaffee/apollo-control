@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { listen, UnlistenFn } from "@tauri-apps/api/event";
+import { AiOutlineClose } from "react-icons/ai";
+import { BsKeyboard } from "react-icons/bs";
+import { FiChevronUp, FiChevronDown } from "react-icons/fi";
+import { TbPiano, TbAdjustmentsHorizontal, TbPlayerPlay } from "react-icons/tb";
 import { FlatControl } from "../../hooks/useDeviceTree";
 import {
   Action,
@@ -35,6 +39,8 @@ import {
   listMidiDevices,
   startMidiCapture,
 } from "../../client/tauri";
+import { Modal } from "../common/Modal/Modal";
+import { IconButton } from "../common/IconButton/IconButton";
 import "./MappingModal.css";
 
 interface MappingModalProps {
@@ -52,46 +58,49 @@ export function MappingModal({ control, mappings, onSave, onDelete, onClose }: M
   const [tab, setTab] = useState<Tab>("keyboard");
 
   return (
-    <div className="mapping-modal__overlay" onClick={onClose}>
-      <div className="mapping-modal" onClick={e => e.stopPropagation()}>
-
-        <header className="mapping-modal__header">
-          <span className="mapping-modal__title">Map — {control.group} {control.label}</span>
-          <button className="mapping-modal__close" onClick={onClose}>✕</button>
-        </header>
-
-        <div className="mapping-modal__tabs">
-          <button
-            className={`mapping-modal__tab${tab === "keyboard" ? " mapping-modal__tab--active" : ""}`}
-            onClick={() => setTab("keyboard")}
-          >Keyboard</button>
-          <button
-            className={`mapping-modal__tab${tab === "midi" ? " mapping-modal__tab--active" : ""}`}
-            onClick={() => setTab("midi")}
-          >MIDI</button>
-        </div>
-
-        {mappings.length > 0 && (
-          <section className="mapping-modal__current">
-            <div className="mapping-modal__section-label">Current mappings</div>
-            {mappings.map(m => (
-              <MappingRow key={m.id} mapping={m} onDelete={() => onDelete(m.id)} />
-            ))}
-          </section>
-        )}
-
-        {tab === "keyboard" && (
-          <KeyboardCapture control={control} onSave={onSave} onClose={onClose} />
-        )}
-        {tab === "midi" && (
-          <MidiCapture control={control} onSave={onSave} onClose={onClose} />
-        )}
+    <Modal
+      onClose={onClose}
+      windowClassName="mapping-modal__window"
+      contentClassName="mapping-modal__content"
+      title={`Map — ${control.group} ${control.label}`}
+    >
+      <div className="mapping-modal__tabs">
+        <button
+          className={`mapping-modal__tab${tab === "keyboard" ? " mapping-modal__tab--active" : ""}`}
+          onClick={() => setTab("keyboard")}
+        >
+          <BsKeyboard size={14} />
+          <span>Keyboard</span>
+        </button>
+        <button
+          className={`mapping-modal__tab${tab === "midi" ? " mapping-modal__tab--active" : ""}`}
+          onClick={() => setTab("midi")}
+        >
+          <TbPiano size={14} />
+          <span>MIDI</span>
+        </button>
       </div>
-    </div>
+
+      {mappings.length > 0 && (
+        <section className="mapping-modal__current">
+          <div className="mapping-modal__section-label">Current mappings</div>
+          {mappings.map(m => (
+            <MappingRow key={m.id} mapping={m} onDelete={() => onDelete(m.id)} />
+          ))}
+        </section>
+      )}
+
+      {tab === "keyboard" && (
+        <KeyboardCapture control={control} onSave={onSave} onClose={onClose} />
+      )}
+      {tab === "midi" && (
+        <MidiCapture control={control} onSave={onSave} onClose={onClose} />
+      )}
+    </Modal>
   );
 }
 
-// ── Keyboard capture (extracted from previous implementation) ──────────────
+// ── Keyboard capture ───────────────────────────────────────────────────────
 
 interface CaptureProps {
   control: FlatControl;
@@ -113,7 +122,8 @@ function KeyboardCapture({ control, onSave, onClose }: CaptureProps) {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Escape") { onClose(); return; }
+      // Esc is handled by the common Modal — don't double-handle it here.
+      if (e.code === "Escape") return;
       e.preventDefault();
       const combo = eventToKeyCombo(e);
       if (!combo) {
@@ -172,7 +182,7 @@ function KeyboardCapture({ control, onSave, onClose }: CaptureProps) {
     <>
       <section className="mapping-modal__capture">
         <div className="mapping-modal__section-label">
-          {isNumeric ? "Or press a key combo / scroll to capture" : "Press a key combo to capture"}
+          {isNumeric ? "Press a key combo / scroll wheel" : "Press a key combo to capture"}
         </div>
         <div className={`mapping-modal__live${captured ? " mapping-modal__live--captured" : ""}`}>
           {liveLabel}
@@ -183,11 +193,15 @@ function KeyboardCapture({ control, onSave, onClose }: CaptureProps) {
             <button
               className={`mapping-modal__dir-btn${direction === "pos" ? " mapping-modal__dir-btn--active" : ""}`}
               onClick={() => setDirection("pos")}
-            >▲ Increase</button>
+            >
+              <FiChevronUp size={14} /> Increase
+            </button>
             <button
               className={`mapping-modal__dir-btn${direction === "neg" ? " mapping-modal__dir-btn--active" : ""}`}
               onClick={() => setDirection("neg")}
-            >▼ Decrease</button>
+            >
+              <FiChevronDown size={14} /> Decrease
+            </button>
           </div>
         )}
 
@@ -248,7 +262,6 @@ function MidiCapture({ control, onSave, onClose }: CaptureProps) {
       const ev = e.payload;
       setLatestLive(ev);
       setCaptured(prev => prev ?? ev);
-      // Auto-detect continuous mode by comparing to the previous live event.
       const prev = prevEventRef.current;
       if (prev && looksContinuous(prev, ev)) {
         setMode("continuous");
@@ -268,16 +281,13 @@ function MidiCapture({ control, onSave, onClose }: CaptureProps) {
     const device = deviceFilter === "__all__" ? null : deviceFilter;
     try {
       const ev = await startMidiCapture(device);
-      // The first event also flows in through the midi:event listener above.
       setCaptured(prev => prev ?? ev);
       setLatestLive(prev => prev ?? ev);
-      // Default to continuous for CC/pitch_bend; discrete for notes.
       if (ev.kind === "cc" || ev.kind === "pitch_bend") setMode("continuous");
       else setMode("discrete");
     } catch (e) {
       setError(String(e));
     }
-    // Note: capture stays armed on the backend until we cancel — useful for follow-up events.
   };
 
   /** Disarm backend capture on unmount or when leaving the tab. */
@@ -352,11 +362,15 @@ function MidiCapture({ control, onSave, onClose }: CaptureProps) {
                 onClick={() => setMode("continuous")}
                 disabled={!isNumeric}
                 title={!isNumeric ? "Continuous mode requires a numeric control" : undefined}
-              >🎚 Continuous</button>
+              >
+                <TbAdjustmentsHorizontal size={14} /> Continuous
+              </button>
               <button
                 className={`mapping-modal__dir-btn${mode === "discrete" ? " mapping-modal__dir-btn--active" : ""}`}
                 onClick={() => setMode("discrete")}
-              >▶ Discrete</button>
+              >
+                <TbPlayerPlay size={14} /> Discrete
+              </button>
             </div>
 
             {mode === "discrete" && (
@@ -422,14 +436,21 @@ function MappingRow({ mapping, onDelete }: MappingRowProps) {
     <div className="mapping-modal__mapping-row">
       <span className="mapping-modal__mapping-key">{triggerStr}</span>
       <span className="mapping-modal__mapping-action">{actionLabel}</span>
-      <button className="mapping-modal__mapping-delete" onClick={onDelete} title="Remove mapping">✕</button>
+      <IconButton
+        Icon={AiOutlineClose}
+        onClick={onDelete}
+        size={12}
+        title="Remove mapping"
+        ariaLabel="Remove mapping"
+        className="mapping-modal__mapping-delete"
+      />
     </div>
   );
 }
 
 function renderTriggerLabel(t: Trigger): string {
   const kb = asKeyCombo(t);
-  if (kb) return `⌨ ${comboLabel(kb)}`;
+  if (kb) return comboLabel(kb);
   const midi = asMidiTrigger(t);
   if (midi) return midiTriggerLabel(midi);
   return "?";
@@ -454,8 +475,8 @@ function getLiveLabel(captured: CapturedCombo | null, liveModifiers: string[]): 
 function getActionLabel(action: Action): string {
   switch (action.type) {
     case "Toggle": return "Toggle";
-    case "Step": return (action as StepAction).delta > 0 ? `▲ +${(action as StepAction).delta}` : `▼ ${(action as StepAction).delta}`;
-    case "Knob": return `Knob (+/-${(action as KnobAction).step})`;
+    case "Step": return (action as StepAction).delta > 0 ? `+${(action as StepAction).delta}` : `${(action as StepAction).delta}`;
+    case "Knob": return `Knob (±${(action as KnobAction).step})`;
     case "Set": return `Set value`;
     case "Hold": return `Hold`;
   }
@@ -492,18 +513,15 @@ function buildMidiAction(control: FlatControl, mode: MidiMode, discreteAction: "
 
   if (mode === "continuous") {
     if (control.type === "bool") return null;
-    // Knob action is the natural fit — the backend interprets its min/max as the target range.
     return { type: "Knob", path: control.path, step, min, max } satisfies KnobAction;
   }
 
-  // Discrete
   if (control.type === "bool") {
     if (discreteAction === "hold") {
       return { type: "Hold", path: control.path, press_value: true, release_value: false };
     }
     return { type: "Toggle", path: control.path };
   }
-  // Numeric + Discrete → step up by one notch on each note-on
   return { type: "Step", path: control.path, delta: step, min, max } satisfies StepAction;
 }
 

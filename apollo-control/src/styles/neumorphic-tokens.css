@@ -1,0 +1,95 @@
+/**
+ * Neumorphic design tokens — single source of truth.
+ * Extracted from Claude Design "AI Studio Foundations v1.0" style guide.
+ * See tasks/neumorphic-redesign-tdd.md §5 for canonical reference.
+ */
+
+:root {
+  /* === Surfaces === */
+  --surface-0: #E4E9F0;       /* Deepest panel base / canvas backdrop */
+  --surface-1: #ECEFF3;       /* Body bg — main neumorphic canvas */
+  --surface-2: #F1F4F8;       /* Slightly raised */
+  --surface-3: #F7F9FC;       /* Raised — modals, popovers */
+  --surface-sunken: #DCE1E9;  /* Recessed wells, slider tracks */
+
+  /* === Shadow tones === */
+  --shadow-light: #FFFFFF;
+  --shadow-dark:  #B8BFCC;
+  --shadow-darker:#A8B0BE;
+
+  /* === Ink (text + icons) === */
+  --ink-900: #1E2530;
+  --ink-700: #3A4454;
+  --ink-500: #6B7686;
+  --ink-400: #8A94A3;
+  --ink-300: #AAB2BF;
+  --ink-200: #C7CDD7;
+
+  /* === Accent gradient chips === */
+  --accent-blue:      #2F6BFF;
+  --accent-blue-deep: #1D4FDB;
+  --accent-blue-soft: #6F96FF;
+  --accent-coral:     #FF6B5B;
+  --accent-violet:    #8B6BFF;
+  --accent-mint:      #2FCFA6;
+  --accent-amber:     #FFB648;
+  --accent-rose:      #FF4F7A;
+
+  /* === Semantic === */
+  --success: #2FB67C;
+  --warning: #FFB648;
+  --danger:  #F25F5C;
+
+  /* === Elevation (dual-shadow neumorphic) === */
+  --e-raised-sm:    -3px -3px 6px var(--shadow-light), 3px 3px 6px var(--shadow-dark);
+  --e-raised:       -6px -6px 14px var(--shadow-light), 6px 6px 14px var(--shadow-dark);
+  --e-raised-lg:    -10px -10px 24px var(--shadow-light), 12px 12px 24px var(--shadow-dark);
+  --e-pressed-sm:   inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+  --e-pressed:      inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+  --e-pressed-deep: inset 6px 6px 12px var(--shadow-darker), inset -6px -6px 12px var(--shadow-light);
+
+  /* === Radii === */
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   18px;
+  --r-xl:   24px;
+  --r-2xl:  32px;
+  --r-pill: 999px;
+
+  /* === Typography — only these faces are used (Geist retired, §10.1) === */
+  --font-sans:    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: "Inter", sans-serif;
+
+  /* === Pre-baked gradients === */
+  --grad-primary:     linear-gradient(#3A78FF, #1D4FDB);
+  --grad-primary-160: linear-gradient(160deg, #4A82FF, #1D4FDB);
+  --grad-danger:      linear-gradient(#FF7A78, #E2433F);
+  --grad-multistop:   linear-gradient(90deg, #2F6BFF 0%, #8B6BFF 50%, #FF6B5B 100%);
+  --grad-progress:    linear-gradient(90deg, #2F6BFF, #6F96FF);
+  --grad-knob:        linear-gradient(145deg, #FFFFFF, #E3E8EF);
+  --grad-nav-active:  linear-gradient(165deg, #2A3140, #0F131C);
+}
+
+/* Type-scale utility classes */
+.t-display { font: 600 48px/1.05 var(--font-display); letter-spacing: -0.03em; }
+.t-h1      { font: 600 32px/1.2  var(--font-display); letter-spacing: -0.02em; }
+.t-h2      { font: 600 24px/1.3  var(--font-display); letter-spacing: -0.015em; }
+.t-h3      { font: 600 18px/1.35 var(--font-display); letter-spacing: -0.01em; }
+.t-body    { font: 400 15px/1.5  var(--font-sans); }
+.t-label   { font: 500 13px/1.4  var(--font-sans); }
+.t-caption {
+  font: 500 11px/1.4 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-500);
+}
+
+/* Primary button shadow recipe — used by .btn--primary and Topbar render-btn */
+.is-primary-shadow {
+  box-shadow:
+    -4px -4px 10px var(--shadow-light),
+     4px  4px 12px rgba(29, 79, 219, 0.35),
+    inset  1px  1px 1px rgba(255, 255, 255, 0.25),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.15);
+}

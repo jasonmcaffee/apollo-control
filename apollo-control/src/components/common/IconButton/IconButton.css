@@ -1,0 +1,30 @@
+/* Neumorphic icon button — small raised pill. Hover tints accent-blue. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--surface-1);
+  color: var(--ink-700);
+  border: none;
+  box-shadow: var(--e-raised-sm);
+  cursor: pointer;
+  transition: color 0.15s ease, box-shadow 0.12s ease;
+  font-family: var(--font-sans);
+}
+
+.icon-btn--circle { border-radius: 50%; }
+.icon-btn--square { border-radius: var(--r-md); }
+
+.icon-btn:hover:not(:disabled) { color: var(--accent-blue); }
+.icon-btn:active:not(:disabled) { box-shadow: var(--e-pressed-sm); }
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.icon-btn__icon {
+  pointer-events: none;
+}

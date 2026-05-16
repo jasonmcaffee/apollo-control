@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { FiPlus, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { MappingEditor } from "../../components/MappingEditor/MappingEditor";
+import { IconButton } from "../../components/common/IconButton/IconButton";
 import { useMappings } from "../../hooks/useMappings";
 import { Mapping, Trigger } from "../../models/types";
 import { midiTriggerLabel } from "../../utils/midiTranslation";
@@ -20,38 +22,43 @@ export function MappingList() {
 
   return (
     <div className="mapping-list">
-      <div className="mapping-list__header">
-        <h1 className="mapping-list__title">Apollo Control</h1>
+      <div className="mapping-list__toolbar">
+        <span className="mapping-list__count">
+          {mappings.length} {mappings.length === 1 ? "mapping" : "mappings"}
+        </span>
         <button className="mapping-list__add-btn" onClick={() => setEditing("new")}>
-          + Add Mapping
+          <FiPlus size={16} />
+          <span>Add Mapping</span>
         </button>
       </div>
 
       {mappings.length === 0 ? (
         <EmptyState onAdd={() => setEditing("new")} />
       ) : (
-        <table className="mapping-list__table">
-          <thead>
-            <tr>
-              <th>Key Combo</th>
-              <th>Name</th>
-              <th>Action</th>
-              <th>Enabled</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {mappings.map(m => (
-              <MappingRow
-                key={m.id}
-                mapping={m}
-                onEdit={() => setEditing(m)}
-                onDelete={() => remove(m.id)}
-                onToggle={() => toggleEnabled(m.id)}
-              />
-            ))}
-          </tbody>
-        </table>
+        <div className="mapping-list__card">
+          <table className="mapping-list__table">
+            <thead>
+              <tr>
+                <th>Trigger</th>
+                <th>Name</th>
+                <th>Action</th>
+                <th>On</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {mappings.map(m => (
+                <MappingRow
+                  key={m.id}
+                  mapping={m}
+                  onEdit={() => setEditing(m)}
+                  onDelete={() => remove(m.id)}
+                  onToggle={() => toggleEnabled(m.id)}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {editing !== null && (
@@ -79,21 +86,24 @@ function MappingRow({ mapping, onEdit, onDelete, onToggle }: MappingRowProps) {
   return (
     <tr className={mapping.enabled ? "" : "mapping-list__row--disabled"}>
       <td className="mapping-list__combo">{combo}</td>
-      <td>{mapping.name}</td>
+      <td className="mapping-list__name">{mapping.name}</td>
       <td className="mapping-list__action-summary">{actionSummary}</td>
       <td>
-        <input
-          type="checkbox"
-          checked={mapping.enabled}
-          onChange={onToggle}
-          title="Enable/disable"
-        />
+        <label className="mapping-list__switch">
+          <input
+            type="checkbox"
+            checked={mapping.enabled}
+            onChange={onToggle}
+            aria-label="Enable/disable mapping"
+          />
+          <span className="mapping-list__switch-track">
+            <span className="mapping-list__switch-thumb" />
+          </span>
+        </label>
       </td>
       <td className="mapping-list__actions">
-        <button className="mapping-list__btn" onClick={onEdit}>Edit</button>
-        <button className="mapping-list__btn mapping-list__btn--danger" onClick={onDelete}>
-          Delete
-        </button>
+        <IconButton Icon={FiEdit2} onClick={onEdit} size={14} title="Edit" ariaLabel="Edit mapping" />
+        <IconButton Icon={FiTrash2} onClick={onDelete} size={14} title="Delete" ariaLabel="Delete mapping" className="mapping-list__btn--danger" />
       </td>
     </tr>
   );
@@ -103,7 +113,10 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="mapping-list__empty">
       <p>No mappings yet.</p>
-      <button className="mapping-list__add-btn" onClick={onAdd}>+ Add your first mapping</button>
+      <button className="mapping-list__add-btn" onClick={onAdd}>
+        <FiPlus size={16} />
+        <span>Add your first mapping</span>
+      </button>
     </div>
   );
 }
@@ -124,6 +137,6 @@ function summarizeAction(mapping: Mapping): string {
     case "Step": return `Step ${action.delta > 0 ? "+" : ""}${action.delta} → ${shortPath}`;
     case "Set": return `Set ${shortPath} = ${JSON.stringify(action.value)}`;
     case "Hold": return `Hold ${shortPath}`;
-    case "Knob": return `Scroll ±${action.step} → ${shortPath}`;
+    case "Knob": return `Knob ±${action.step} → ${shortPath}`;
   }
 }

@@ -1,38 +1,53 @@
+/* Neumorphic control picker — sunken list with sticky group labels. */
 .control-picker {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  height: 280px;
+  height: 240px;
 }
 
 .control-picker__search {
-  padding: 6px 10px;
-  border: 1px solid #444;
-  border-radius: 5px;
-  background: #1e1e1e;
-  color: #e0e0e0;
-  font-size: 13px;
+  padding: 9px 14px;
+  background: var(--surface-1);
+  border: none;
+  border-radius: var(--r-md);
+  box-shadow: var(--e-pressed-sm);
+  color: var(--ink-900);
+  font: 400 13px/1.4 var(--font-sans);
+}
+
+.control-picker__search:focus {
+  outline: none;
+  box-shadow: var(--e-pressed-sm), 0 0 0 3px rgba(47, 107, 255, 0.25);
+}
+
+.control-picker__search::placeholder {
+  color: var(--ink-400);
 }
 
 .control-picker__list {
   overflow-y: auto;
   flex: 1;
-  border: 1px solid #333;
-  border-radius: 5px;
-  background: #161616;
+  background: var(--surface-1);
+  border-radius: var(--r-md);
+  box-shadow: var(--e-pressed-sm);
+  padding: 4px;
+}
+
+.control-picker__group + .control-picker__group {
+  margin-top: 6px;
 }
 
 .control-picker__group-label {
-  padding: 5px 10px 3px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #888;
+  padding: 8px 12px 4px;
+  font: 500 10px/1.4 var(--font-mono);
+  color: var(--ink-500);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
   position: sticky;
   top: 0;
-  background: #1a1a1a;
-  border-bottom: 1px solid #2a2a2a;
+  background: var(--surface-1);
+  z-index: 1;
 }
 
 .control-picker__item {
@@ -40,38 +55,42 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 6px 12px;
+  padding: 8px 12px;
   border: none;
   background: transparent;
-  color: #d0d0d0;
-  font-size: 13px;
+  color: var(--ink-700);
+  font: 400 13px/1.4 var(--font-sans);
   cursor: pointer;
   text-align: left;
-  transition: background 0.1s;
+  border-radius: var(--r-sm);
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .control-picker__item:hover {
-  background: #252525;
+  background: var(--surface-2);
+  color: var(--ink-900);
 }
 
 .control-picker__item--selected {
-  background: #2a2a4a;
-  color: #a0a0ff;
+  background: var(--surface-1);
+  color: var(--accent-blue);
+  box-shadow: var(--e-pressed-sm);
 }
 
 .control-picker__item-type {
-  font-size: 11px;
-  color: #666;
-  font-family: monospace;
+  font: 500 10px/1.4 var(--font-mono);
+  color: var(--ink-400);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .control-picker__loading,
 .control-picker__error,
 .control-picker__empty {
-  padding: 16px;
-  color: #888;
-  font-size: 13px;
+  padding: 18px;
+  color: var(--ink-500);
+  font: 400 13px/1.4 var(--font-sans);
   text-align: center;
 }
 
-.control-picker__error { color: #f87171; }
+.control-picker__error { color: var(--danger); }

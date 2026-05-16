@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { BsKeyboard } from "react-icons/bs";
 import { Mapping, asKeyCombo, asMidiTrigger } from "../../models/types";
 import { FlatControl } from "../../hooks/useDeviceTree";
 import { comboLabel } from "../../utils/keyTranslation";
 import { midiTriggerLabel } from "../../utils/midiTranslation";
+import { CircularKnob } from "../common/CircularKnob/CircularKnob";
 import "./ControlRow.css";
 
 interface ControlRowProps {
@@ -21,6 +23,7 @@ export function ControlRow({ control, value, mappings, onSetValue, onOpenModal }
   return <NumericRow control={control} value={value} mappings={mappings} onSetValue={onSetValue} onOpenModal={onOpenModal} />;
 }
 
+/** Bool control row: neumorphic toggle pill plus map button. */
 function BoolRow({ control, value, mappings, onSetValue, onOpenModal }: ControlRowProps) {
   const isOn = value === true || value === 1;
   const summary = getMappingSummary(mappings);
@@ -32,51 +35,44 @@ function BoolRow({ control, value, mappings, onSetValue, onOpenModal }: ControlR
         className={`ctrl-row__toggle${isOn ? " ctrl-row__toggle--on" : ""}`}
         onClick={() => onSetValue(control.path, !isOn)}
         title={isOn ? "Click to turn OFF" : "Click to turn ON"}
+        aria-pressed={isOn}
       >
-        {isOn ? "ON" : "OFF"}
+        <span className="ctrl-row__toggle-track">
+          <span className="ctrl-row__toggle-thumb" />
+        </span>
+        <span className="ctrl-row__toggle-label">{isOn ? "ON" : "OFF"}</span>
       </button>
       <MapBtn summary={summary} onClick={onOpenModal} />
     </div>
   );
 }
 
+/** Numeric control row: circular knob with center value + map button. */
 function NumericRow({ control, value, mappings, onSetValue, onOpenModal }: ControlRowProps) {
   const min = control.min ?? -96;
   const max = control.max ?? 0;
   const step = computeStep(min, max);
   const num = typeof value === "number" ? value : 0;
-  const [sliderVal, setSliderVal] = useState(num);
+  const [localVal, setLocalVal] = useState(num);
   const summary = getMappingSummary(mappings);
 
-  useEffect(() => { setSliderVal(num); }, [num]);
-
-  const stepDown = () => onSetValue(control.path, clamp(num - step, min, max));
-  const stepUp = () => onSetValue(control.path, clamp(num + step, min, max));
+  useEffect(() => { setLocalVal(num); }, [num]);
 
   return (
     <div className="ctrl-row ctrl-row--numeric">
-      <div className="ctrl-row__top">
-        <span className="ctrl-row__label">{control.label}</span>
-        <span className="ctrl-row__value">{formatNum(num, control)}</span>
-      </div>
-      <div className="ctrl-row__slider-row">
-        <input
-          type="range"
-          className="ctrl-row__slider"
-          min={min} max={max} step={step / 4}
-          value={sliderVal}
-          onChange={e => setSliderVal(parseFloat(e.target.value))}
-          onMouseUp={e => onSetValue(control.path, parseFloat((e.target as HTMLInputElement).value))}
-          onTouchEnd={e => onSetValue(control.path, parseFloat((e.target as HTMLInputElement).value))}
-        />
-      </div>
-      <div className="ctrl-row__actions">
-        <div className="ctrl-row__steps">
-          <button className="ctrl-row__step-btn" onClick={stepDown} title={`−${step}`}>−</button>
-          <button className="ctrl-row__step-btn" onClick={stepUp} title={`+${step}`}>+</button>
-        </div>
-        <MapBtn summary={summary} onClick={onOpenModal} />
-      </div>
+      <CircularKnob
+        min={min}
+        max={max}
+        value={localVal}
+        step={step}
+        onChange={next => { setLocalVal(next); onSetValue(control.path, next); }}
+        onLiveChange={setLocalVal}
+        format={v => formatNum(v, control)}
+        label={control.label}
+        ariaLabel={`${control.group} ${control.label}`}
+        size="md"
+      />
+      <MapBtn summary={summary} onClick={onOpenModal} />
     </div>
   );
 }
@@ -86,15 +82,18 @@ interface MapBtnProps {
   onClick: () => void;
 }
 
-/** Button showing the current mapping summary (or "Map") and opening the modal on click. */
+/** Pill (when mapped) or circular icon button (when not) — opens the mapping modal. */
 function MapBtn({ summary, onClick }: MapBtnProps) {
+  const mapped = summary !== null;
   return (
     <button
-      className={`ctrl-row__map-btn${summary ? " ctrl-row__map-btn--mapped" : ""}`}
+      className={`ctrl-row__map-btn${mapped ? " ctrl-row__map-btn--mapped" : " ctrl-row__map-btn--icon"}`}
       onClick={onClick}
-      title={summary ? `Mapped: ${summary} — click to edit` : "Click to assign a key"}
+      title={mapped ? `Mapped: ${summary} — click to edit` : "Click to assign a key"}
+      aria-label={mapped ? `Mapped: ${summary}` : "Assign a key"}
     >
-      {summary ? `⌨ ${summary}` : "Map"}
+      <BsKeyboard className="ctrl-row__map-icon" size={14} />
+      {mapped && <span className="ctrl-row__map-text">{summary}</span>}
     </button>
   );
 }
@@ -126,10 +125,6 @@ function computeStep(min: number, max: number): number {
   if (range <= 10) return 0.5;
   if (range <= 30) return 1;
   return 2;
-}
-
-function clamp(v: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, parseFloat(v.toFixed(4))));
 }
 
 function formatNum(num: number, control: FlatControl): string {

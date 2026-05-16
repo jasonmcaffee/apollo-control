@@ -1,8 +1,10 @@
+/* Neumorphic Apollo Control panel. White surface, raised section cards, sticky raised header. */
 .control-panel {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #111;
+  background: var(--surface-1);
+  padding-bottom: 32px;
 }
 
 /* ── Header ─────────────────────────────────── */
@@ -10,42 +12,58 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: #181818;
-  border-bottom: 1px solid #2a2a2a;
+  padding: 16px 28px;
+  margin: 16px 16px 24px;
+  background: var(--surface-1);
+  border-radius: var(--r-xl);
+  box-shadow: var(--e-raised);
   position: sticky;
-  top: 0;
+  top: 16px;
   z-index: 10;
 }
 
 .control-panel__title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .control-panel__title-text {
-  font-size: 16px;
-  font-weight: 700;
-  color: #e0e0e0;
+  font: 600 20px/1.2 var(--font-display);
+  color: var(--ink-900);
   letter-spacing: -0.02em;
+}
+
+.control-panel__sdk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--surface-1);
+  border-radius: var(--r-pill);
+  box-shadow: var(--e-pressed-sm);
+  font: 500 11px/1.4 var(--font-mono);
+  color: var(--ink-700);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .control-panel__sdk-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #555;
+  background: var(--ink-300);
   flex-shrink: 0;
 }
 
 .control-panel__sdk-dot--ok {
-  background: #4a9a4a;
-  box-shadow: 0 0 4px #4a9a4a;
+  background: var(--accent-mint);
+  box-shadow: 0 0 8px var(--accent-mint);
 }
 
 .control-panel__sdk-dot--err {
-  background: #9a4a4a;
+  background: var(--accent-coral);
+  box-shadow: 0 0 8px var(--accent-coral);
   animation: blink 1.5s infinite;
 }
 
@@ -55,102 +73,90 @@
 }
 
 .control-panel__mappings-btn {
-  padding: 5px 14px;
-  border: 1px solid #3a3a6a;
-  border-radius: 5px;
-  background: #1a1a2a;
-  color: #8080cc;
-  font-size: 13px;
+  padding: 9px 22px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--surface-1);
+  color: var(--ink-700);
+  font: 500 13px/1.4 var(--font-sans);
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
+  box-shadow: var(--e-raised-sm);
+  transition: color 0.15s ease, box-shadow 0.12s ease;
 }
 
 .control-panel__mappings-btn:hover {
-  background: #252540;
-  border-color: #6e6ef5;
-  color: #a0a0ff;
+  color: var(--accent-blue);
+}
+
+.control-panel__mappings-btn:active {
+  box-shadow: var(--e-pressed-sm);
 }
 
 /* ── Grid ───────────────────────────────────── */
 .control-panel__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1px;
-  background: #1a1a1a;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-auto-rows: min-content;
+  align-items: start;
+  gap: 18px;
+  padding: 0 16px;
   flex: 1;
 }
 
-/* ── Section ────────────────────────────────── */
+/* ── Section card ───────────────────────────── */
 .ctrl-section {
-  background: #141414;
-  padding: 14px 16px;
+  background: var(--surface-1);
+  padding: 18px 18px 14px;
+  border-radius: var(--r-lg);
+  box-shadow: var(--e-raised);
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
 }
 
 .ctrl-section--wide {
   grid-column: span 2;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 760px) {
   .ctrl-section--wide { grid-column: span 1; }
 }
 
 .ctrl-section__name {
-  font-size: 11px;
-  font-weight: 700;
-  color: #555;
+  font: 500 11px/1.4 var(--font-mono);
+  color: var(--ink-500);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #222;
+  letter-spacing: 0.14em;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--surface-sunken);
 }
 
 .ctrl-section__controls {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
-/* ── Capture banner ─────────────────────────── */
-.control-panel__capture-banner {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #2a1e0a;
-  border: 1px solid #f5a623;
-  color: #f5a623;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  z-index: 100;
-  animation: slide-up 0.2s ease;
+/* Wide sections: numeric knobs flow side-by-side, bool rows span full width. */
+.ctrl-section--wide .ctrl-section__controls {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 18px;
+  align-items: start;
 }
 
-.control-panel__capture-banner button {
-  border: none;
-  background: transparent;
-  color: #f5a623;
-  cursor: pointer;
-  text-decoration: underline;
-  font-size: 13px;
-  padding: 0;
+.ctrl-section--wide .ctrl-row--bool {
+  grid-column: 1 / -1;
 }
 
-@keyframes slide-up {
-  from { opacity: 0; transform: translate(-50%, 8px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
-}
-
+/* ── Loading state ──────────────────────────── */
 .control-panel__loading {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100vh;
-  color: #555;
-  font-size: 14px;
+  color: var(--ink-500);
+  font: 500 14px/1.4 var(--font-sans);
 }
