@@ -10,6 +10,7 @@ import { useControlValues } from "../../hooks/useControlValues";
 import { useMappings } from "../../hooks/useMappings";
 import { Mapping } from "../../models/types";
 import { getSectionTooltip } from "../../utils/tooltipContent";
+import { trackMappingModalOpened, trackSettingsOpened } from "../../utils/analytics";
 import "./ControlPanel.css";
 
 /** Main control surface panel: shows all Apollo controls with live values and inline key mapping. */
@@ -21,6 +22,16 @@ export function ControlPanel() {
   const [showSettings, setShowSettings] = useState(false);
   const handleCloseModal = useCallback(() => setModalControl(null), []);
   const handleCloseSettings = useCallback(() => setShowSettings(false), []);
+
+  const handleOpenModal = useCallback((control: FlatControl) => {
+    trackMappingModalOpened(control);
+    setModalControl(control);
+  }, []);
+
+  const handleOpenSettings = useCallback(() => {
+    trackSettingsOpened();
+    setShowSettings(true);
+  }, []);
 
   const rows = useMemo(() => groupControlsByRow(controls), [controls]);
 
@@ -51,7 +62,7 @@ export function ControlPanel() {
             {sdkAvailable ? "Live" : "Offline"}
           </span>
         </div>
-        <IconButton Icon={BsGear} onClick={() => setShowSettings(true)} ariaLabel="Settings" title="Settings" size={16} />
+        <IconButton Icon={BsGear} onClick={handleOpenSettings} ariaLabel="Settings" title="Settings" size={16} />
       </header>
 
       <div className="control-panel__grid">
@@ -64,7 +75,7 @@ export function ControlPanel() {
                 values={values}
                 mappingsByPath={mappingsByPath}
                 onSetValue={setValue}
-                onOpenModal={setModalControl}
+                onOpenModal={handleOpenModal}
               />
             ))}
           </div>

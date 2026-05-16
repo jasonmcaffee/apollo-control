@@ -41,6 +41,7 @@ import {
 } from "../../client/tauri";
 import { Modal } from "../common/Modal/Modal";
 import { IconButton } from "../common/IconButton/IconButton";
+import { trackMappingSaved, trackMappingDeleted } from "../../utils/analytics";
 import "./MappingModal.css";
 
 interface MappingModalProps {
@@ -56,6 +57,17 @@ type Tab = "keyboard" | "midi";
 /** Modal for viewing, editing, and capturing key/scroll/MIDI mappings for a single control. */
 export function MappingModal({ control, mappings, onSave, onDelete, onClose }: MappingModalProps) {
   const [tab, setTab] = useState<Tab>("keyboard");
+
+  const handleSave = (mapping: Mapping) => {
+    trackMappingSaved(control, mapping);
+    onSave(mapping);
+  };
+
+  const handleDelete = (id: string) => {
+    const mapping = mappings.find(m => m.id === id);
+    if (mapping) trackMappingDeleted(mapping);
+    onDelete(id);
+  };
 
   return (
     <Modal
@@ -85,16 +97,16 @@ export function MappingModal({ control, mappings, onSave, onDelete, onClose }: M
         <section className="mapping-modal__current">
           <div className="mapping-modal__section-label">Current mappings</div>
           {mappings.map(m => (
-            <MappingRow key={m.id} mapping={m} onDelete={() => onDelete(m.id)} />
+            <MappingRow key={m.id} mapping={m} onDelete={() => handleDelete(m.id)} />
           ))}
         </section>
       )}
 
       {tab === "keyboard" && (
-        <KeyboardCapture control={control} onSave={onSave} onClose={onClose} />
+        <KeyboardCapture control={control} onSave={handleSave} onClose={onClose} />
       )}
       {tab === "midi" && (
-        <MidiCapture control={control} onSave={onSave} onClose={onClose} />
+        <MidiCapture control={control} onSave={handleSave} onClose={onClose} />
       )}
     </Modal>
   );
