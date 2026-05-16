@@ -1,0 +1,106 @@
+.mapping-editor-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.mapping-editor {
+  background: #1e1e2e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 28px;
+  width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+
+.mapping-editor__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.mapping-editor__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mapping-editor__input {
+  padding: 7px 10px;
+  border: 1px solid #444;
+  border-radius: 5px;
+  background: #161616;
+  color: #e0e0e0;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mapping-editor__input--delta {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.mapping-editor__select {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid #444;
+  border-radius: 5px;
+  background: #161616;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.mapping-editor__action-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mapping-editor__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.mapping-editor__btn {
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.mapping-editor__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mapping-editor__btn--cancel {
+  background: #333;
+  color: #ccc;
+}
+
+.mapping-editor__btn--save {
+  background: #6e6ef5;
+  color: #fff;
+}
+
+.mapping-editor__btn--save:hover:not(:disabled) {
+  background: #8080ff;
+}

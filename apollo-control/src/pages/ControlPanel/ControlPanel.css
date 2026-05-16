@@ -1,0 +1,156 @@
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #111;
+}
+
+/* ── Header ─────────────────────────────────── */
+.control-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #181818;
+  border-bottom: 1px solid #2a2a2a;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.control-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-panel__title-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e0e0e0;
+  letter-spacing: -0.02em;
+}
+
+.control-panel__sdk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #555;
+  flex-shrink: 0;
+}
+
+.control-panel__sdk-dot--ok {
+  background: #4a9a4a;
+  box-shadow: 0 0 4px #4a9a4a;
+}
+
+.control-panel__sdk-dot--err {
+  background: #9a4a4a;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.control-panel__mappings-btn {
+  padding: 5px 14px;
+  border: 1px solid #3a3a6a;
+  border-radius: 5px;
+  background: #1a1a2a;
+  color: #8080cc;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.control-panel__mappings-btn:hover {
+  background: #252540;
+  border-color: #6e6ef5;
+  color: #a0a0ff;
+}
+
+/* ── Grid ───────────────────────────────────── */
+.control-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1px;
+  background: #1a1a1a;
+  flex: 1;
+}
+
+/* ── Section ────────────────────────────────── */
+.ctrl-section {
+  background: #141414;
+  padding: 14px 16px;
+  min-width: 0;
+}
+
+.ctrl-section--wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 700px) {
+  .ctrl-section--wide { grid-column: span 1; }
+}
+
+.ctrl-section__name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #222;
+}
+
+.ctrl-section__controls {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Capture banner ─────────────────────────── */
+.control-panel__capture-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2a1e0a;
+  border: 1px solid #f5a623;
+  color: #f5a623;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 100;
+  animation: slide-up 0.2s ease;
+}
+
+.control-panel__capture-banner button {
+  border: none;
+  background: transparent;
+  color: #f5a623;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 13px;
+  padding: 0;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.control-panel__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: #555;
+  font-size: 14px;
+}

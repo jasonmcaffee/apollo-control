@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Default capability for Apollo Control","local":true,"windows":["main"],"permissions":["core:default","core:event:default","core:window:default","core:tray:default"]}}

@@ -1,0 +1,65 @@
+* { box-sizing: border-box; }
+
+.app {
+  background: #111;
+  color: #e0e0e0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  position: relative;
+}
+
+/* ── Mappings drawer ─────────────────────────── */
+.app__drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 200;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.app__drawer {
+  width: min(640px, 100vw);
+  height: 100vh;
+  background: #181818;
+  border-left: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: drawer-in 0.22s ease;
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.app__drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e0e0e0;
+  flex-shrink: 0;
+}
+
+.app__drawer-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.1s;
+}
+
+.app__drawer-close:hover { color: #e0e0e0; }
+
+.app__drawer > :last-child {
+  flex: 1;
+  overflow-y: auto;
+}

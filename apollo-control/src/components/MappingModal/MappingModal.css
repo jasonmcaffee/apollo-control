@@ -1,0 +1,240 @@
+.mapping-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mapping-modal {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  width: min(480px, 95vw);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  animation: modal-in 0.15s ease;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Header ─────────────────────────────────── */
+.mapping-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.mapping-modal__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.mapping-modal__close {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.1s;
+}
+.mapping-modal__close:hover { color: #ccc; }
+
+/* ── Section label ───────────────────────────── */
+.mapping-modal__section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+/* ── Current mappings ────────────────────────── */
+.mapping-modal__current {
+  padding: 14px 18px;
+  border-bottom: 1px solid #222;
+}
+
+.mapping-modal__mapping-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.mapping-modal__mapping-key {
+  font-size: 12px;
+  font-family: monospace;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: #a0a0cc;
+  flex-shrink: 0;
+}
+
+.mapping-modal__mapping-action {
+  font-size: 11px;
+  color: #666;
+  flex: 1;
+}
+
+.mapping-modal__mapping-delete {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  transition: color 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+.mapping-modal__mapping-delete:hover { color: #cc4444; background: #2a1a1a; }
+
+/* ── Hardware Volume Knob preset ─────────────── */
+.mapping-modal__hardware-knob {
+  padding: 14px 18px;
+  border-bottom: 1px solid #222;
+}
+
+.mapping-modal__knob-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mapping-modal__knob-mods {
+  display: flex;
+  gap: 5px;
+}
+
+.mapping-modal__mod-btn {
+  padding: 4px 10px;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 5px;
+  color: #777;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+.mapping-modal__mod-btn:hover { background: #2a2a2a; color: #bbb; }
+.mapping-modal__mod-btn--active {
+  background: #1a1a3a;
+  border-color: #5555aa;
+  color: #a0a0ff;
+}
+
+.mapping-modal__knob-label {
+  font-size: 12px;
+  font-family: monospace;
+  color: #888;
+  flex: 1;
+}
+
+/* ── Capture area ────────────────────────────── */
+.mapping-modal__capture {
+  padding: 18px 18px 14px;
+}
+
+.mapping-modal__live {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  border: 2px dashed #2a2a2a;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: monospace;
+  color: #555;
+  margin-bottom: 12px;
+  transition: border-color 0.15s, color 0.15s;
+  padding: 12px;
+  text-align: center;
+}
+
+.mapping-modal__live--captured {
+  border-color: #3a3a6a;
+  border-style: solid;
+  color: #a0a0ff;
+  background: #1a1a2a;
+}
+
+/* ── Direction picker ────────────────────────── */
+.mapping-modal__direction {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mapping-modal__dir-btn {
+  flex: 1;
+  padding: 7px;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+.mapping-modal__dir-btn:hover { background: #2a2a2a; color: #bbb; }
+.mapping-modal__dir-btn--active {
+  background: #1a1a3a;
+  border-color: #5555aa;
+  color: #a0a0ff;
+}
+
+/* ── Scroll note ─────────────────────────────── */
+.mapping-modal__scroll-note {
+  font-size: 11px;
+  color: #556;
+  text-align: center;
+  padding: 2px 0;
+}
+
+/* ── Footer ──────────────────────────────────── */
+.mapping-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid #222;
+}
+
+.mapping-modal__btn {
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.mapping-modal__btn--cancel {
+  background: #222;
+  border: 1px solid #333;
+  color: #888;
+}
+.mapping-modal__btn--cancel:hover { background: #2a2a2a; color: #bbb; }
+
+.mapping-modal__btn--save {
+  background: #1a2a4a;
+  border: 1px solid #2a4a8a;
+  color: #6090cc;
+}
+.mapping-modal__btn--save:hover:not(:disabled) { background: #1e3560; border-color: #4070c0; color: #80b0ff; }
+.mapping-modal__btn--save:disabled { opacity: 0.35; cursor: default; }
