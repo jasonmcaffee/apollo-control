@@ -13,7 +13,7 @@ Apollo Control solves this by providing midi and computer keyboard mapping to co
 ## Releases
 ### Windows
 
-[Download Latest](/releases/20260512/Apollo%20Control_0.1.0_x64_en-US.msi)
+[Download Latest](/releases/20260516/Apollo%20Control_0.3.0_x64_en-US.msi)
 
 ### Mac OS
 Will be very easy to create just waiting to see if there's any interest in the project first. (File an issue if you're interested)
