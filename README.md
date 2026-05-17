@@ -1,20 +1,28 @@
 # Apollo Control
 
-![Apollo Control UI](img.png)
 
 ## The Problem
 
 Universal Audio makes excellent audio interfaces, but their software story has a glaring gap: there is no way to control your Apollo from your computer. Want to turn down the monitor volume? Reach over and twist the physical knob. Need to enable phantom power for a condenser mic? Get up and tap the button on the device. Want to mute a channel mid-session? Hope you can reach it without disrupting your take.
 
-For producers, engineers, and podcasters who spend hours in front of a screen, this is a constant friction point. Your hands are on your keyboard and mouse — not hovering over a hardware unit that may be rack-mounted, tucked behind a desk, or otherwise inconvenient to reach.
+For producers, engineers, and podcasters who spend hours in front of a screen, this is a constant friction point. Your hands are on your keyboard and mouse - not hovering over a hardware unit that may be rack-mounted, tucked behind a desk, or otherwise inconvenient to reach.
 
-Apollo Control solves this.
+Apollo Control solves this by providing midi and computer keyboard mapping to control your device.
 
 ---
+## Releases
+### Windows
 
+[Download Latest](/releases/20260512/Apollo%20Control_0.1.0_x64_en-US.msi)
+
+### Mac OS
+Will be very easy to create just waiting to see if there's any interest in the project first. (File an issue if you're interested)
+
+---
 ## What It Does
 
 Apollo Control is a software dashboard that gives you full, real-time control over your Apollo audio interface from your computer. The UI mirrors the actual state of your device and lets you adjust everything without touching the hardware.
+
 
 ![Apollo Control UI](img.png)
 
