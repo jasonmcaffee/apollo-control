@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BsKeyboard } from "react-icons/bs";
 import { Mapping, asKeyCombo, asMidiTrigger } from "../../models/types";
 import { FlatControl } from "../../hooks/useDeviceTree";
@@ -7,6 +7,7 @@ import { midiTriggerLabel } from "../../utils/midiTranslation";
 import { getControlTooltip, TooltipInfo } from "../../utils/tooltipContent";
 import { InfoTooltip } from "../common/InfoTooltip/InfoTooltip";
 import { CircularKnob } from "../common/CircularKnob/CircularKnob";
+import { trackControlAdjusted } from "../../utils/analytics";
 import "./ControlRow.css";
 
 interface ControlRowProps {
@@ -73,6 +74,8 @@ function BoolRow({ control, value, mappings, onSetValue, onOpenModal }: ControlR
   );
 }
 
+const KNOB_DEBOUNCE_MS = 5000;
+
 /** Numeric control row: header (label + map icon) on top, circular knob below. */
 function NumericRow({ control, value, mappings, onSetValue, onOpenModal }: ControlRowProps) {
   const min = control.min ?? -96;
@@ -82,8 +85,18 @@ function NumericRow({ control, value, mappings, onSetValue, onOpenModal }: Contr
   const [localVal, setLocalVal] = useState(num);
   const summary = getMappingSummary(mappings);
   const tooltipInfo = getControlTooltip(control.group, control.label);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { setLocalVal(num); }, [num]);
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
+
+  /** Commit value to SDK and reset the 5-second analytics debounce. */
+  const handleChange = (next: number) => {
+    setLocalVal(next);
+    onSetValue(control.path, next);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => trackControlAdjusted(control, next), KNOB_DEBOUNCE_MS);
+  };
 
   return (
     <div className="ctrl-row ctrl-row--numeric">
@@ -93,7 +106,7 @@ function NumericRow({ control, value, mappings, onSetValue, onOpenModal }: Contr
         max={max}
         value={localVal}
         step={step}
-        onChange={next => { setLocalVal(next); onSetValue(control.path, next); }}
+        onChange={handleChange}
         onLiveChange={setLocalVal}
         format={v => formatNum(v, control)}
         ariaLabel={`${control.group} ${control.label}`}

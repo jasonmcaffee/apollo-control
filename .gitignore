@@ -1,4 +1,5 @@
 /.idea/
+/apollo-control/.env.local
 /apollo-control/dist/
 /apollo-control/node_modules/
 /apollo-control/src-tauri/target/
