@@ -25,6 +25,7 @@ Apollo Control is a software dashboard that gives you full, real-time control ov
 
 
 ![Apollo Control UI](img.png)
+![img_1.png](img_1.png)
 
 ### Monitor Section
 - **Monitor Level** — Control your main speaker volume with a smooth dial
