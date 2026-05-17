@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/apollo-volume.iml" filepath="$PROJECT_DIR$/apollo-volume.iml" />
+      <module fileurl="file://$PROJECT_DIR$/apollo-control.iml" filepath="$PROJECT_DIR$/apollo-control.iml" />
     </modules>
   </component>
 </project>
