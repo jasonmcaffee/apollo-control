@@ -1,93 +1,322 @@
 # Apollo Control
 
-
 ## The Problem
 
-Universal Audio makes excellent audio interfaces, but their software story has a glaring gap: there is no way to control your Apollo from your computer. Want to turn down the monitor volume? Reach over and twist the physical knob. Need to enable phantom power for a condenser mic? Get up and tap the button on the device. Want to mute a channel mid-session? Hope you can reach it without disrupting your take.
+Universal Audio makes excellent audio interfaces, but controlling them from your computer is surprisingly limited.
 
-For producers, engineers, and podcasters who spend hours in front of a screen, this is a constant friction point. Your hands are on your keyboard and mouse - not hovering over a hardware unit that may be rack-mounted, tucked behind a desk, or otherwise inconvenient to reach.
+If you want to adjust monitor volume, mute speakers, enable phantom power, switch monitors, or tweak headphone mixes, you typically have four options — and all of them introduce friction into your workflow.
 
-Apollo Control solves this by providing midi and computer keyboard mapping to control your device.
+### 1. Reach for the Hardware
+
+The default workflow is physical control directly on the Apollo itself:
+- Turn the monitor knob
+- Press hardware buttons
+- Navigate front-panel controls
+
+That sounds fine until the device is:
+- rack-mounted
+- under a desk
+- across the room
+- built into a studio rack
+- difficult to access mid-session
+
+For producers, engineers, streamers, and podcasters, constantly reaching for the interface becomes unnecessary friction.
+
+### 2. Open Console and Point-and-Click
+
+Universal Audio’s Console software exposes many controls, but interacting with it means:
+- switching windows
+- finding the correct channel
+- locating the right control
+- clicking tiny UI elements during a session
+
+That interruption breaks workflow, especially when recording, mixing, or live monitoring.
+
+### 3. Use Default Keyboard Shortcuts
+
+UAD does provide a few built-in keyboard shortcuts for monitor control, but they come with major limitations:
+- shortcuts are fixed and not customizable
+- only a small number of functions are supported
+- you must remember the key combinations
+- they aren't designed for personalized workflows
+- they don't integrate well with custom hardware
+
+For example:
+- `Cmd + F12` → monitor volume up
+- `Cmd + F11` → monitor volume down
+- `Cmd + F10` → monitor mute
+
+Useful — but extremely limited.
+
+### 4. Limited MIDI Support
+
+Modern studio workflows increasingly rely on MIDI controllers:
+- fader banks
+- rotary encoders
+- macro pads
+- foot pedals
+- DAW control surfaces
+
+But Apollo and Console provide little to no flexible MIDI mapping support.
+
+Existing solutions are limited because they:
+- only support specific Mackie-compatible devices
+- require complicated third-party tools
+- don't expose all Apollo controls
+- break easily between updates
+- are difficult to customize
+- force users into predefined workflows
+
+There is no native way to:
+- map any MIDI device
+- map arbitrary MIDI CCs
+- create custom MIDI behaviors
+- bind controls freely to Apollo parameters
+
+If you want a dedicated physical monitor knob, custom mute button, or programmable control surface, you're mostly on your own.
 
 ---
-## Releases
-### Windows
+
+## The Solution
+
+Apollo Control gives you flexible, real-time control of your Apollo directly from your computer using:
+
+- fully customizable keyboard shortcuts
+- any MIDI controller or MIDI device
+- external knobs, faders, foot pedals, and macro pads
+- global hotkeys
+- hardware control surfaces
+
+Instead of adapting your workflow around the hardware, Apollo Control adapts the hardware to your workflow.
+
+---
+
+# Releases
+
+## Windows
 
 [Download Latest](https://github.com/jasonmcaffee/apollo-control/raw/master/releases/20260516/Apollo%20Control_0.3.0_x64_en-US.msi)
 
-### Mac OS
-Will be very easy to create just waiting to see if there's any interest in the project first. (File an issue if you're interested)
+## macOS
+
+macOS support should be straightforward to add — currently waiting to gauge interest in the project first.  
+(File an issue if you'd like a macOS build.)
 
 ---
-## What It Does
 
-Apollo Control is a software dashboard that gives you full, real-time control over your Apollo audio interface from your computer. The UI mirrors the actual state of your device and lets you adjust everything without touching the hardware.
+# What It Does
 
+Apollo Control is a real-time software dashboard for Apollo audio interfaces.
+
+The UI mirrors the live state of your device and allows full control without touching the hardware.
 
 ![Apollo Control UI](img.png)
-![img_1.png](img_1.png)
+![Apollo Control UI 2](img_1.png)
 
-### Monitor Section
-- **Monitor Level** — Control your main speaker volume with a smooth dial
-- **Dim** — Drop the monitor level by a fixed amount (great for talking to someone in the room)
-- **Dim Attenuation** — Set how much the Dim function cuts the volume
-- **Mute** — Kill the monitors entirely
-- **Mono** — Collapse stereo to mono for mono compatibility checks
-- **Alt Monitor** — Switch to an alternate monitor output
-
-### Input Channels (Analog 1 & 2)
-- **Gain** — Set mic/instrument preamp gain
-- **Fader** — Channel volume in the mix
-- **Pan** — Left/right positioning
-- **48V Phantom Power** — Enable for condenser mics
-- **Mute / Solo** — Standard channel control
-- **Pad** — Reduce input level for loud sources
-- **Low Cut** — Roll off low-frequency rumble
-- **Phase** — Flip polarity to fix phase issues
-
-### Aux Sends & Headphone Outputs
-- **Aux 1 & 2** — Independent send levels for headphone mixes or external gear
-- **HP 1 & HP 2** — Dedicated headphone output levels and mute
-
-All values update in real time — if you change something on the physical device, the UI reflects it immediately, and vice versa.
+All changes stay synchronized in both directions:
+- changing the hardware updates the UI instantly
+- changing the UI updates the hardware instantly
 
 ---
 
-## Keyboard Mapping
+# Monitor Section
 
-Apollo Control lets you control your Apollo using your computer keyboard — including the **media keys** on keyboards and external knobs that emit volume key events.
+- **Monitor Level** — Control main speaker volume
+- **Dim** — Temporarily reduce monitor level
+- **Dim Attenuation** — Configure dim reduction amount
+- **Mute** — Silence monitor outputs
+- **Mono** — Collapse stereo output to mono
+- **Alt Monitor** — Switch between monitor outputs
+
+---
+
+# Input Channels (Analog 1 & 2)
+
+- **Gain** — Mic/instrument preamp gain
+- **Fader** — Channel mix level
+- **Pan** — Stereo positioning
+- **48V Phantom Power** — Condenser mic power
+- **Mute / Solo** — Standard channel controls
+- **Pad** — Reduce hot input levels
+- **Low Cut** — Remove low-frequency rumble
+- **Phase** — Flip polarity for phase correction
+
+---
+
+# Aux Sends & Headphone Outputs
+
+- **Aux 1 & 2** — Independent cue/send mixes
+- **HP 1 & HP 2** — Headphone output level and mute
+
+---
+
+# Keyboard Mapping
+
+Apollo Control includes a fully customizable keyboard shortcut system.
+
+Unlike UAD’s built-in shortcuts, any keyboard combination can be mapped to any control in the application.
+
+This includes:
+- standard keyboard shortcuts
+- media keys
+- macro pads
+- external volume knobs that emit keyboard events
+- programmable keyboards
+
+## Default Shortcuts
 
 By default:
-- **Shift + Volume Up** — Raise monitor level
-- **Shift + Volume Down** — Lower monitor level
-- **Shift + Volume Mute** — Toggle monitor mute
 
-Custom keyboard mappings can be created for any control in the app. Mappings support modifier keys (Shift, Ctrl, Alt) for global hotkeys that work even when another app is in the foreground, or bare key mappings that activate when other apps are focused (so you don't interfere with normal typing).
+- **Shift + Volume Up** → Increase monitor level
+- **Shift + Volume Down** → Decrease monitor level
+- **Shift + Volume Mute** → Toggle monitor mute
 
-This is especially useful if you have a **hardware knob or dial** — many of these emit standard media key events, so plugging one in gives you a physical volume knob that actually controls your Apollo monitors.
+## Custom Mapping
+
+Any control can be assigned to:
+- single keys
+- modifier combinations
+- media keys
+- global hotkeys
+
+Mappings support:
+- `Shift`
+- `Ctrl`
+- `Alt`
+- multiple modifier combinations
+
+Global shortcuts work even when Apollo Control is not focused.
+
+This makes it possible to:
+- control monitor volume while mixing in another DAW
+- mute speakers instantly during recording
+- create ergonomic shortcuts tailored to your workflow
+- use external knobs as dedicated Apollo monitor controls
+
+## Why This Matters
+
+Default UAD shortcuts are:
+- limited
+- fixed
+- non-customizable
+- difficult to remember at scale
+
+Apollo Control removes those constraints by letting you design controls around your setup instead of memorizing someone else’s.
 
 ---
 
-## MIDI Mapping
+# MIDI Mapping
 
-Apollo Control includes a full MIDI mapping system. Any MIDI controller — a fader board, a knob controller, a launchpad, a foot pedal — can be mapped to any parameter in the app.
+Apollo Control includes a full MIDI mapping engine.
 
-Supported MIDI event types:
-- **Control Change (CC)** — Ideal for knobs and faders; maps to continuous parameters like volume or gain
-- **Note On / Note Off** — Ideal for buttons and pads; maps to toggles like mute and phantom power
-- **Pitch Bend** — High-resolution control for precise adjustments
+Any MIDI device can control any Apollo parameter.
 
-Each mapping can target a specific MIDI device and channel, or respond to any device on any channel. Mappings support several action modes:
-- **Knob** — Continuous control that tracks the physical position of a fader or knob
-- **Step** — Each trigger nudges a value up or down by a fixed amount
-- **Toggle** — Flips a boolean on/off with each trigger
-- **Hold** — Applies one value while held, reverts when released
-- **Set** — Jumps directly to a specific value
+Supported devices include:
+- MIDI keyboards
+- fader banks
+- knob controllers
+- Launchpads
+- foot pedals
+- control surfaces
+- DIY MIDI hardware
+- DAW controllers
 
-Whether you're running a session with a full MIDI control surface or just want a single knob dedicated to monitor volume, the mapping system handles it.
+No Mackie Control requirement.  
+No predefined device whitelist.  
+No special hardware support needed.
+
+If your device can send MIDI, Apollo Control can map it.
+
+## Supported MIDI Events
+
+### Control Change (CC)
+
+Perfect for:
+- knobs
+- faders
+- expression pedals
+
+Ideal for continuous parameters like:
+- monitor volume
+- gain
+- headphone levels
+- aux sends
+
+### Note On / Note Off
+
+Perfect for:
+- buttons
+- pads
+- toggles
+
+Ideal for:
+- mute
+- solo
+- phantom power
+- mono
+- dim
+
+### Pitch Bend
+
+High-resolution continuous control for precision adjustments.
 
 ---
 
-## Live Status
+## MIDI Mapping Modes
 
-The **LIVE** indicator in the top bar shows whether Apollo Control is actively connected to your Apollo. When connected, changes are reflected instantly in both directions — the UI stays in sync with the hardware at all times.
+Each mapping supports multiple interaction modes:
+
+### Knob
+
+Continuous tracking tied directly to hardware position.
+
+### Step
+
+Increment/decrement values by fixed amounts.
+
+### Toggle
+
+Flip states on/off.
+
+### Hold
+
+Apply a value while pressed and revert on release.
+
+### Set
+
+Jump directly to a predefined value.
+
+---
+
+## Why MIDI Matters
+
+Without Apollo Control, MIDI workflows for Apollo devices are:
+- unsupported or incomplete
+- dependent on third-party hacks
+- limited to Mackie-style integrations
+- difficult to configure
+- limited to specific hardware
+
+Apollo Control allows:
+- any MIDI device
+- any MIDI channel
+- any mapping configuration
+- any Apollo control target
+
+Whether you want:
+- a single physical monitor knob
+- a footswitch for talkback-style muting
+- a full hardware mixing surface
+
+Apollo Control handles it.
+
+---
+
+# Live Status
+
+The **LIVE** indicator in the top bar shows connection status with your Apollo.
+
+When connected:
+- all changes synchronize instantly
+- hardware and software remain in sync
+- updates flow in both directions in real time
