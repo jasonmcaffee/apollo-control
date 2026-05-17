@@ -109,17 +109,20 @@ function copyMsiToReleases(msiDir, fileName, dateStr) {
   return destDir;
 }
 
+const GITHUB_RAW_BASE = 'https://github.com/jasonmcaffee/apollo-control/raw/master';
+
 /**
- * Rewrite the Windows download link in README.md to point to the new release.
+ * Rewrite the Windows download link in README.md to a raw GitHub URL so clicking
+ * it triggers an immediate download rather than opening the blob viewer.
  * @param dateStr - YYYYMMDD folder name
  * @param fileName - MSI filename (spaces will be URL-encoded)
  */
 function updateReadme(dateStr, fileName) {
   const readmePath = join(repoRoot, 'README.md');
   const encodedName = fileName.replace(/ /g, '%20');
-  const newLink = `[Download Latest](/releases/${dateStr}/${encodedName})`;
+  const newLink = `[Download Latest](${GITHUB_RAW_BASE}/releases/${dateStr}/${encodedName})`;
   const readme = readFileSync(readmePath, 'utf8');
-  const updated = readme.replace(/\[Download Latest\]\(\/releases\/[^)]+\)/, newLink);
+  const updated = readme.replace(/\[Download Latest\]\([^)]+\)/, newLink);
   writeFileSync(readmePath, updated);
 }
 
